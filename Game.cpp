@@ -4,6 +4,7 @@
 // Needed for a helper function to read compiled shader files from the hard drive
 #pragma comment(lib, "d3dcompiler.lib")
 #include <d3dcompiler.h>
+#include <cmath>
 
 // For the DirectX Math library
 using namespace DirectX;
@@ -45,6 +46,7 @@ Game::~Game()
 	// - If we weren't using smart pointers, we'd need
 	//   to call Release() on each DirectX object created in Game
 
+	//delete renderer;
 }
 
 // --------------------------------------------------------
@@ -63,6 +65,9 @@ void Game::Init()
 	// geometric primitives (points, lines or triangles) we want to draw.  
 	// Essentially: "What kind of shape should the GPU draw with our data?"
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// Set up our smart pointer to the custom renderer
+	//renderer = new Renderer(context, depthStencilView, backBufferRTV, vertexShader, pixelShader, inputLayout, swapChain);
 }
 
 // --------------------------------------------------------
@@ -144,82 +149,69 @@ void Game::LoadShaders()
 void Game::CreateBasicGeometry()
 {
 	// Create some temporary variables to represent colors
-	// - Not necessary, just makes things more readable
 	XMFLOAT4 red = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
 	XMFLOAT4 green = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
 	XMFLOAT4 blue = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
+	XMFLOAT4 white = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
-	// Set up the vertices of the triangle we would like to draw
-	// - We're going to copy this array, exactly as it exists in memory
-	//    over to a DirectX-controlled data structure (the vertex buffer)
-	// - Note: Since we don't have a camera or really any concept of
-	//    a "3d world" yet, we're simply describing positions within the
-	//    bounds of how the rasterizer sees our screen: [-1 to +1] on X and Y
-	// - This means (0,0) is at the very center of the screen.
-	// - These are known as "Normalized Device Coordinates" or "Homogeneous 
-	//    Screen Coords", which are ways to describe a position without
-	//    knowing the exact size (in pixels) of the image/window/etc.  
-	// - Long story short: Resizing the window also resizes the triangle,
-	//    since we're describing the triangle in terms of the window itself
-	Vertex vertices[] =
+	Vertex vertices01[] =
 	{
-		{ XMFLOAT3(+0.0f, +0.5f, +0.0f), red },
-		{ XMFLOAT3(+0.5f, -0.5f, +0.0f), blue },
-		{ XMFLOAT3(-0.5f, -0.5f, +0.0f), green },
+		{ XMFLOAT3(+0.0f, +0.5f, +0.0f), red },		//triangle top
+		{ XMFLOAT3(+0.5f, +0.25f, +0.0f), blue },	//triangle left
+		{ XMFLOAT3(+0.5f, +0.5f, +0.0f), white },	//triangle  right
 	};
 
-	// Set up the indices, which tell us which vertices to use and in which order
-	// - This is somewhat redundant for just 3 vertices (it's a simple example)
-	// - Indices are technically not required if the vertices are in the buffer 
-	//    in the correct order and each one will be used exactly once
-	// - But just to see how it's done...
-	unsigned int indices[] = { 0, 1, 2 };
+	Vertex vertices02[] =
+	{
+		{ XMFLOAT3(-0.4f, -0.4f, +0.0f), red },		//top right
+		{ XMFLOAT3(-0.4f, -0.6f, +0.0f), green },	//bottom right
+		{ XMFLOAT3(-0.6f, -.04f, +0.0f), blue },	//top left
+		{ XMFLOAT3(-0.6f, -0.6f, +0.0f), white },	//bottom left
+	};
 
+	Vertex vertices03[] =
+	{
+		{ XMFLOAT3(+0.0f, +0.0f, +0.0f), white },	//center
+		{ XMFLOAT3(+0.0f, +0.2f, +0.0f), white },	//house peak
+		{ XMFLOAT3(-0.1f, +0.0f, +0.0f), white },	//roof left
+		{ XMFLOAT3(-0.1f, -0.2f, +0.0f), white },	//base left
+		{ XMFLOAT3(-0.1f, -0.1f, +0.0f), white },	//base right
+		{ XMFLOAT3(-0.1f, -0.1f, +0.0f), white },	//roof right
+	};
 
-	// Create the VERTEX BUFFER description -----------------------------------
-	// - The description is created on the stack because we only need
-	//    it to create the buffer.  The description is then useless.
-	D3D11_BUFFER_DESC vbd;
-	vbd.Usage = D3D11_USAGE_IMMUTABLE;
-	vbd.ByteWidth = sizeof(Vertex) * 3;       // 3 = number of vertices in the buffer
-	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER; // Tells DirectX this is a vertex buffer
-	vbd.CPUAccessFlags = 0;
-	vbd.MiscFlags = 0;
-	vbd.StructureByteStride = 0;
+	// please don't judge me by this code, it's late and I'm very tired. I'll do better next time.
 
-	// Create the proper struct to hold the initial vertex data
-	// - This is how we put the initial data into the buffer
-	D3D11_SUBRESOURCE_DATA initialVertexData;
-	initialVertexData.pSysMem = vertices;
+	unsigned int indices01[] = { 1, 0, 2 };
+	unsigned int indices02[] = { 3, 2, 1, 2, 0, 1 };
+	unsigned int indices03[] = { 5, 2, 1, 3, 2, 4, 5, 4, 3 };
 
-	// Actually create the buffer with the initial data
-	// - Once we do this, we'll NEVER CHANGE THE BUFFER AGAIN
-	device->CreateBuffer(&vbd, &initialVertexData, vertexBuffer.GetAddressOf());
+	meshes.push_back(
+		Mesh(
+			vertices01,
+			sizeof(vertices01),
+			indices01,
+			sizeof(indices01),
+			device
+		));
 
+	meshes.push_back(
+		Mesh(
+			vertices02,
+			sizeof(vertices02),
+			indices02,
+			sizeof(indices02),
+			device
+		));
 
-
-	// Create the INDEX BUFFER description ------------------------------------
-	// - The description is created on the stack because we only need
-	//    it to create the buffer.  The description is then useless.
-	D3D11_BUFFER_DESC ibd;
-	ibd.Usage = D3D11_USAGE_IMMUTABLE;
-	ibd.ByteWidth = sizeof(unsigned int) * 3;	// 3 = number of indices in the buffer
-	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;	// Tells DirectX this is an index buffer
-	ibd.CPUAccessFlags = 0;
-	ibd.MiscFlags = 0;
-	ibd.StructureByteStride = 0;
-
-	// Create the proper struct to hold the initial index data
-	// - This is how we put the initial data into the buffer
-	D3D11_SUBRESOURCE_DATA initialIndexData;
-	initialIndexData.pSysMem = indices;
-
-	// Actually create the buffer with the initial data
-	// - Once we do this, we'll NEVER CHANGE THE BUFFER AGAIN
-	device->CreateBuffer(&ibd, &initialIndexData, indexBuffer.GetAddressOf());
-
+	//meshes.push_back(
+	//	Mesh(
+	//		vertices03,
+	//		sizeof(vertices03),
+	//		indices03,
+	//		sizeof(indices03),
+	//		device
+	//	));
 }
-
 
 // --------------------------------------------------------
 // Handle resizing DirectX "stuff" to match the new window size.
@@ -246,8 +238,9 @@ void Game::Update(float deltaTime, float totalTime)
 // --------------------------------------------------------
 void Game::Draw(float deltaTime, float totalTime)
 {
-	// Background color (Cornflower Blue in this case) for clearing
-	const float color[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
+
+	// Background color (#000 black) for clearing
+	const float color[4] = { 0.0f, 0.0f, 0.00f, 0.0f };
 
 	// Clear the render target and depth buffer (erases what's on the screen)
 	//  - Do this ONCE PER FRAME
@@ -259,7 +252,26 @@ void Game::Draw(float deltaTime, float totalTime)
 		1.0f,
 		0);
 
+	// This setup is incredibly stupid, I know.
+	// I spent ~5 hrs trying to set up a renderer (which kinda crapped out), so this is a placeholder 'til I get that renderer up and working to handle this.
+	for (int i = 0; i < meshes.size(); i++) 
+	{
+		DrawMesh(i);
+	}
 
+
+	// Present the back buffer to the user
+	//  - Puts the final frame we're drawing into the window so the user can see it
+	//  - Do this exactly ONCE PER FRAME (always at the very end of the frame)
+	swapChain->Present(0, 0);
+
+	// Due to the usage of a more sophisticated swap chain,
+	// the render target must be re-bound after every call to Present()
+	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
+}
+
+void Game::DrawMesh(int i)
+{
 	// Set the vertex and pixel shaders to use for the next Draw() command
 	//  - These don't technically need to be set every frame
 	//  - Once you start applying different shaders to different objects,
@@ -275,7 +287,6 @@ void Game::Draw(float deltaTime, float totalTime)
 	// - However, this isn't always the case (but might be for this course)
 	context->IASetInputLayout(inputLayout.Get());
 
-
 	// Set buffers in the input assembler
 	//  - Do this ONCE PER OBJECT you're drawing, since each object might
 	//    have different geometry.
@@ -284,28 +295,23 @@ void Game::Draw(float deltaTime, float totalTime)
 	//    in a larger application/game
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
-	context->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &offset);
-	context->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 
+	context->IASetVertexBuffers(0, 1, meshes[i].GetVertexBuffer().GetAddressOf(), &stride, &offset);
+	context->IASetIndexBuffer(meshes[i].GetIndexBuffer().Get(), DXGI_FORMAT_R32_UINT, 0);
+
+	// Old
+	//context->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &offset);
+	//context->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+
+	//context->IASetVertexBuffers(0, 1, meshes[0].GetVertexBuffer().GetAddressOf(), &stride, &offset);
+	//context->IASetIndexBuffer(meshes[0].GetIndexBuffer().Get(), DXGI_FORMAT_R32_UINT, 0);
 
 	// Finally do the actual drawing
-	//  - Do this ONCE PER OBJECT you intend to draw
-	//  - This will use all of the currently set DirectX "stuff" (shaders, buffers, etc)
-	//  - DrawIndexed() uses the currently set INDEX BUFFER to look up corresponding
-	//     vertices in the currently set VERTEX BUFFER
-	context->DrawIndexed(
-		3,     // The number of indices to use (we could draw a subset if we wanted)
-		0,     // Offset to the first index we want to use
-		0);    // Offset to add to each index when looking up vertices
+	//  context->DrawIndexed(
+	//		3,     // The number of indices to use (we could draw a subset if we wanted)
+	//		0,     // Offset to the first index we want to use
+	//		0);    // Offset to add to each index when looking up vertices
 
-
-
-	// Present the back buffer to the user
-	//  - Puts the final frame we're drawing into the window so the user can see it
-	//  - Do this exactly ONCE PER FRAME (always at the very end of the frame)
-	swapChain->Present(0, 0);
-
-	// Due to the usage of a more sophisticated swap chain,
-	// the render target must be re-bound after every call to Present()
-	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
+	context->DrawIndexed(meshes[i].GetIndexCount(), 0, 0);
+	printf("Index Count %d \n", meshes[i].GetIndexCount());
 }

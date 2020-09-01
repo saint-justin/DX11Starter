@@ -1,8 +1,13 @@
 #pragma once
 
 #include "DXCore.h"
+#include "Mesh.h"
+//#include "Renderer.h"
+
 #include <DirectXMath.h>
 #include <wrl/client.h> // Used for ComPtr - a smart pointer for COM objects
+#include <vector>
+#include <memory>
 
 class Game 
 	: public DXCore
@@ -18,6 +23,7 @@ public:
 	void OnResize();
 	void Update(float deltaTime, float totalTime);
 	void Draw(float deltaTime, float totalTime);
+	void DrawMesh(int i);
 
 private:
 
@@ -40,5 +46,10 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
 	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
 
+	// Custom renderer
+	//Renderer* renderer;
+
+	// Collection of meshes
+	std::vector<Mesh> meshes;
 };
 
