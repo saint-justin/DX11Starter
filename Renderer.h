@@ -8,38 +8,21 @@
 
 class Renderer
 {
-	/*
 public:
-	Renderer(
-		Microsoft::WRL::ComPtr<ID3D11DeviceContext> _context,
-		Microsoft::WRL::ComPtr<ID3D11DepthStencilView> _depthStencilView,
-		Microsoft::WRL::ComPtr<ID3D11RenderTargetView> _backBufferRTV,
-		Microsoft::WRL::ComPtr<ID3D11VertexShader> _vertexShader,
-		Microsoft::WRL::ComPtr<ID3D11PixelShader> _pixelShader,
-		Microsoft::WRL::ComPtr<ID3D11InputLayout> _inputLayout,
-		Microsoft::WRL::ComPtr<IDXGISwapChain> _swapChain
-	);
+	Renderer();
 
-	void ClearFrame();
-	void Run();
-	void SetShadersAndInputLayer();
-	void SetBuffers();
-	void DrawIndexedMeshes();
-	void Present();
+	void ClearBackground(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
+		Microsoft::WRL::ComPtr<ID3D11RenderTargetView> backBufferRTV,
+		Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthStencilView);
 
-	void AddMesh(Mesh* _mesh);
+	void DrawMeshes(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, 
+		Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader, 
+		Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader);
 
-	Mesh meshes[3];
-	int meshCount = 0;
+	
+	std::vector<Mesh*> meshes;
 
 private:
-	Microsoft::WRL::ComPtr<ID3D11DeviceContext> context;
-	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthStencilView;
-	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> backBufferRTV;
-	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
-	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
-	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
-	Microsoft::WRL::ComPtr<IDXGISwapChain> swapChain;
-	*/
+
 };
 

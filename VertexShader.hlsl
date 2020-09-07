@@ -6,11 +6,6 @@
 // - Each variable must have a semantic, which defines its usage
 struct VertexShaderInput
 { 
-	// Data type
-	//  |
-	//  |   Name          Semantic
-	//  |    |                |
-	//  v    v                v
 	float3 position		: POSITION;     // XYZ position
 	float4 color		: COLOR;        // RGBA color
 };
@@ -22,11 +17,6 @@ struct VertexShaderInput
 // - Each variable must have a semantic, which defines its usage
 struct VertexToPixel
 {
-	// Data type
-	//  |
-	//  |   Name          Semantic
-	//  |    |                |
-	//  v    v                v
 	float4 position		: SV_POSITION;	// XYZW position (System Value Position)
 	float4 color		: COLOR;        // RGBA color
 };

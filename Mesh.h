@@ -7,9 +7,14 @@
 class Mesh
 {
 public:
+	// Setup
 	Mesh(Vertex verts[], int numVerts, unsigned int indices[], int numIndices, Microsoft::WRL::ComPtr<ID3D11Device> device);
+
+	// Vertex and Index buffers
 	Microsoft::WRL::ComPtr<ID3D11Buffer> GetVertexBuffer();
 	Microsoft::WRL::ComPtr<ID3D11Buffer> GetIndexBuffer();
+
+	// Index count access
 	int GetIndexCount();
 
 private:

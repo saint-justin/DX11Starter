@@ -1,5 +1,6 @@
 #include "Game.h"
 #include "Vertex.h"
+#include "Renderer.h"
 
 // Needed for a helper function to read compiled shader files from the hard drive
 #pragma comment(lib, "d3dcompiler.lib")
@@ -32,6 +33,8 @@ Game::Game(HINSTANCE hInstance)
 	printf("Console window created successfully.  Feel free to printf() here.\n");
 #endif
 
+	// Setting up renderer
+	renderer = new Renderer();
 }
 
 // --------------------------------------------------------
@@ -46,7 +49,7 @@ Game::~Game()
 	// - If we weren't using smart pointers, we'd need
 	//   to call Release() on each DirectX object created in Game
 
-	//delete renderer;
+	delete renderer;
 }
 
 // --------------------------------------------------------
@@ -66,8 +69,8 @@ void Game::Init()
 	// Essentially: "What kind of shape should the GPU draw with our data?"
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	// Set up our smart pointer to the custom renderer
-	//renderer = new Renderer(context, depthStencilView, backBufferRTV, vertexShader, pixelShader, inputLayout, swapChain);
+	// Ensure the pipeline knows how to interpret the data (numbers) from the vertex buffer.  
+	context->IASetInputLayout(inputLayout.Get());
 }
 
 // --------------------------------------------------------
@@ -185,32 +188,10 @@ void Game::CreateBasicGeometry()
 	unsigned int indices02[] = { 3, 2, 1, 2, 0, 1 };
 	unsigned int indices03[] = { 5, 2, 1, 3, 2, 4, 5, 4, 3 };
 
-	meshes.push_back(
-		Mesh(
-			vertices01,
-			sizeof(vertices01),
-			indices01,
-			sizeof(indices01),
-			device
-		));
-
-	meshes.push_back(
-		Mesh(
-			vertices02,
-			sizeof(vertices02),
-			indices02,
-			sizeof(indices02),
-			device
-		));
-
-	//meshes.push_back(
-	//	Mesh(
-	//		vertices03,
-	//		sizeof(vertices03),
-	//		indices03,
-	//		sizeof(indices03),
-	//		device
-	//	));
+	Mesh* mesh1 = new Mesh(vertices01, sizeof(vertices01), indices01, sizeof(indices01), device);
+	Mesh* mesh2 = new Mesh(vertices02, sizeof(vertices02), indices02, sizeof(indices02), device);
+	renderer->meshes.push_back(mesh1);
+	renderer->meshes.push_back(mesh2);
 }
 
 // --------------------------------------------------------
@@ -238,80 +219,14 @@ void Game::Update(float deltaTime, float totalTime)
 // --------------------------------------------------------
 void Game::Draw(float deltaTime, float totalTime)
 {
-
-	// Background color (#000 black) for clearing
-	const float color[4] = { 0.0f, 0.0f, 0.00f, 0.0f };
-
-	// Clear the render target and depth buffer (erases what's on the screen)
-	//  - Do this ONCE PER FRAME
-	//  - At the beginning of Draw (before drawing *anything*)
-	context->ClearRenderTargetView(backBufferRTV.Get(), color);
-	context->ClearDepthStencilView(
-		depthStencilView.Get(),
-		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
-		1.0f,
-		0);
-
-	// This setup is incredibly stupid, I know.
-	// I spent ~5 hrs trying to set up a renderer (which kinda crapped out), so this is a placeholder 'til I get that renderer up and working to handle this.
-	for (int i = 0; i < meshes.size(); i++) 
-	{
-		DrawMesh(i);
-	}
-
+	// Clear the background then draw the meshes
+	renderer->ClearBackground(context, backBufferRTV, depthStencilView);
+	renderer->DrawMeshes(context, vertexShader, pixelShader);
 
 	// Present the back buffer to the user
-	//  - Puts the final frame we're drawing into the window so the user can see it
-	//  - Do this exactly ONCE PER FRAME (always at the very end of the frame)
 	swapChain->Present(0, 0);
 
-	// Due to the usage of a more sophisticated swap chain,
-	// the render target must be re-bound after every call to Present()
+	// Due to the usage of a more sophisticated swap chain, the render target must be re-bound after every call to Present()
 	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
 }
 
-void Game::DrawMesh(int i)
-{
-	// Set the vertex and pixel shaders to use for the next Draw() command
-	//  - These don't technically need to be set every frame
-	//  - Once you start applying different shaders to different objects,
-	//    you'll need to swap the current shaders before each draw
-	context->VSSetShader(vertexShader.Get(), 0, 0);
-	context->PSSetShader(pixelShader.Get(), 0, 0);
-
-
-	// Ensure the pipeline knows how to interpret the data (numbers)
-	// from the vertex buffer.  
-	// - If all of your 3D models use the exact same vertex layout,
-	//    this could simply be done once in Init()
-	// - However, this isn't always the case (but might be for this course)
-	context->IASetInputLayout(inputLayout.Get());
-
-	// Set buffers in the input assembler
-	//  - Do this ONCE PER OBJECT you're drawing, since each object might
-	//    have different geometry.
-	//  - for this demo, this step *could* simply be done once during Init(),
-	//    but I'm doing it here because it's often done multiple times per frame
-	//    in a larger application/game
-	UINT stride = sizeof(Vertex);
-	UINT offset = 0;
-
-	context->IASetVertexBuffers(0, 1, meshes[i].GetVertexBuffer().GetAddressOf(), &stride, &offset);
-	context->IASetIndexBuffer(meshes[i].GetIndexBuffer().Get(), DXGI_FORMAT_R32_UINT, 0);
-
-	// Old
-	//context->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &offset);
-	//context->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
-
-	//context->IASetVertexBuffers(0, 1, meshes[0].GetVertexBuffer().GetAddressOf(), &stride, &offset);
-	//context->IASetIndexBuffer(meshes[0].GetIndexBuffer().Get(), DXGI_FORMAT_R32_UINT, 0);
-
-	// Finally do the actual drawing
-	//  context->DrawIndexed(
-	//		3,     // The number of indices to use (we could draw a subset if we wanted)
-	//		0,     // Offset to the first index we want to use
-	//		0);    // Offset to add to each index when looking up vertices
-
-	context->DrawIndexed(meshes[i].GetIndexCount(), 0, 0);
-	printf("Index Count %d \n", meshes[i].GetIndexCount());
-}
