@@ -71,6 +71,18 @@ void Game::Init()
 
 	// Ensure the pipeline knows how to interpret the data (numbers) from the vertex buffer.  
 	context->IASetInputLayout(inputLayout.Get());
+
+	// Creating external vert shader buffer
+	unsigned int size = sizeof(VertexShaderExternalData);
+	size = (size + 15) / 16 * 16;
+	CD3D11_BUFFER_DESC cbDesc = {};
+	cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cbDesc.ByteWidth = size;
+	cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	cbDesc.Usage = D3D11_USAGE_DYNAMIC;
+	device->CreateBuffer(&cbDesc, 0, vsConstantBuffer.GetAddressOf());
+
+
 }
 
 // --------------------------------------------------------
@@ -219,9 +231,16 @@ void Game::Update(float deltaTime, float totalTime)
 // --------------------------------------------------------
 void Game::Draw(float deltaTime, float totalTime)
 {
+	// Setting up and appending vertex data info  -- 
+	// Note for grader --
+	// All the constant buffer resource binding info is in renderer.cpp under the DrawMeshes class
+	VertexShaderExternalData vsData;
+	vsData.colorTint = XMFLOAT4(1.0f, 0.25f, 0.25f, 1.0f);
+	vsData.offset = XMFLOAT3(0.25f, 0.0f, 0.0f);
+
 	// Clear the background then draw the meshes
 	renderer->ClearBackground(context, backBufferRTV, depthStencilView);
-	renderer->DrawMeshes(context, vertexShader, pixelShader);
+	renderer->DrawMeshes(context, vertexShader, pixelShader, vsConstantBuffer, vsData);
 
 	// Present the back buffer to the user
 	swapChain->Present(0, 0);

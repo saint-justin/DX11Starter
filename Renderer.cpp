@@ -1,7 +1,14 @@
 #include "Renderer.h"
 
 Renderer::Renderer() {
-	printf("---> Renderer loaded");
+	printf("---> Renderer loaded\n");
+}
+
+Renderer::~Renderer() {
+	for (int i = 0; i < meshes.size(); i++) {
+		delete meshes[i];
+	}
+	printf("---> Renderer unloaded\n");
 }
 
 void Renderer::ClearBackground(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, Microsoft::WRL::ComPtr<ID3D11RenderTargetView> backBufferRTV, Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthStencilView) {
@@ -19,7 +26,12 @@ void Renderer::ClearBackground(Microsoft::WRL::ComPtr<ID3D11DeviceContext> conte
 		0);
 }
 
-void Renderer::DrawMeshes(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader, Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader)
+// Cycles through all the meshes the renderer has a references to and renders them on the rendertarget to get presented to the screen
+void Renderer::DrawMeshes(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, 
+	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader, 
+	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader,
+	Microsoft::WRL::ComPtr<ID3D11Buffer> vsConstantBuffer,
+	VertexShaderExternalData vsData)
 {
 	for (int i = 0; i < meshes.size(); i++)
 	{
@@ -36,6 +48,13 @@ void Renderer::DrawMeshes(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, M
 
 		context->IASetVertexBuffers(0, 1, meshes[i]->GetVertexBuffer().GetAddressOf(), &stride, &offset);
 		context->IASetIndexBuffer(meshes[i]->GetIndexBuffer().Get(), DXGI_FORMAT_R32_UINT, 0);
+
+		// Copying to resource
+		D3D11_MAPPED_SUBRESOURCE mappedBuffer = {};
+		context->Map(vsConstantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedBuffer);
+		memcpy(mappedBuffer.pData, &vsData, sizeof(vsData));
+		context->Unmap(vsConstantBuffer.Get(), 0);
+		context->VSSetConstantBuffers(0, 1, vsConstantBuffer.GetAddressOf());
 
 		// Do the actual drawing
 		context->DrawIndexed(meshes[i]->GetIndexCount(), 0, 0);
