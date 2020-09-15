@@ -231,7 +231,7 @@ void Game::Update(float deltaTime, float totalTime)
 // --------------------------------------------------------
 void Game::Draw(float deltaTime, float totalTime)
 {
-	// Setting up and appending vertex data info  -- 
+	// Setting up and appending vertex data info
 	// Note for grader --
 	// All the constant buffer resource binding info is in renderer.cpp under the DrawMeshes class
 	VertexShaderExternalData vsData;
