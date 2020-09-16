@@ -5,7 +5,6 @@
 // Needed for a helper function to read compiled shader files from the hard drive
 #pragma comment(lib, "d3dcompiler.lib")
 #include <d3dcompiler.h>
-#include <cmath>
 
 // For the DirectX Math library
 using namespace DirectX;
@@ -169,6 +168,7 @@ void Game::CreateBasicGeometry()
 	XMFLOAT4 blue = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
 	XMFLOAT4 white = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
+	// Generating three basic meshes that will be used to test entities
 	Vertex vertices01[] =
 	{
 		{ XMFLOAT3(+0.0f, +0.5f, +0.0f), red },		//triangle top
@@ -186,24 +186,26 @@ void Game::CreateBasicGeometry()
 
 	Vertex vertices03[] =
 	{
-		{ XMFLOAT3(+0.0f, +0.0f, +0.0f), white },	//center
-		{ XMFLOAT3(+0.0f, +0.2f, +0.0f), white },	//house peak
-		{ XMFLOAT3(-0.1f, +0.0f, +0.0f), white },	//roof left
-		{ XMFLOAT3(-0.1f, -0.2f, +0.0f), white },	//base left
-		{ XMFLOAT3(-0.1f, -0.1f, +0.0f), white },	//base right
-		{ XMFLOAT3(-0.1f, -0.1f, +0.0f), white },	//roof right
+		{ XMFLOAT3(+0.9f, +0.9f, +0.0f), white },		//triangle top right
+		{ XMFLOAT3(+0.9f, +0.5f, +0.0f), white },	//triangle bottom right
+		{ XMFLOAT3(+0.5f, +0.9f, +0.0f), white },	//triangle top left
 	};
 
-	// please don't judge me by this code, it's late and I'm very tired. I'll do better next time.
 
 	unsigned int indices01[] = { 1, 0, 2 };
 	unsigned int indices02[] = { 3, 2, 1, 2, 0, 1 };
-	unsigned int indices03[] = { 5, 2, 1, 3, 2, 4, 5, 4, 3 };
+	unsigned int indices03[] = { 0, 1, 2 };
 
 	Mesh* mesh1 = new Mesh(vertices01, sizeof(vertices01), indices01, sizeof(indices01), device);
 	Mesh* mesh2 = new Mesh(vertices02, sizeof(vertices02), indices02, sizeof(indices02), device);
+	Mesh* mesh3 = new Mesh(vertices03, sizeof(vertices03), indices03, sizeof(indices03), device);
+
 	renderer->meshes.push_back(mesh1);
 	renderer->meshes.push_back(mesh2);
+	renderer->meshes.push_back(mesh3);
+
+	// Now that the renderer has the meshes, turn them into entities
+	renderer->Init();
 }
 
 // --------------------------------------------------------
@@ -231,16 +233,9 @@ void Game::Update(float deltaTime, float totalTime)
 // --------------------------------------------------------
 void Game::Draw(float deltaTime, float totalTime)
 {
-	// Setting up and appending vertex data info
-	// Note for grader --
-	// All the constant buffer resource binding info is in renderer.cpp under the DrawMeshes class
-	VertexShaderExternalData vsData;
-	vsData.colorTint = XMFLOAT4(1.0f, 0.25f, 0.25f, 1.0f);
-	vsData.offset = XMFLOAT3(0.25f, 0.0f, 0.0f);
-
 	// Clear the background then draw the meshes
 	renderer->ClearBackground(context, backBufferRTV, depthStencilView);
-	renderer->DrawMeshes(context, vertexShader, pixelShader, vsConstantBuffer, vsData);
+	renderer->DrawMeshes(context, vertexShader, pixelShader, vsConstantBuffer);
 
 	// Present the back buffer to the user
 	swapChain->Present(0, 0);
