@@ -11,6 +11,7 @@ public:
 	void SetPosition(float x, float y, float z);
 	void SetRotation(float pitch, float yaw, float roll);
 	void SetScale(float x, float y, float z);
+	void MoveRelative(float x, float y, float z);
 
 	// Collection of getters
 	DirectX::XMFLOAT3 GetPosition();

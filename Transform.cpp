@@ -39,6 +39,22 @@ void Transform::SetScale(float x, float y, float z)
 	matrixDirty = true;
 }
 
+// Moves the transform relative to the rotational vector
+void Transform::MoveRelative(float x, float y, float z) {
+	// Calculate the adjustment we need to make
+	DirectX::XMVECTOR absDirection = DirectX::XMVectorSet(x, y, z, 0);
+	DirectX::XMVECTOR rotationVector = DirectX::XMQuaternionRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
+	DirectX::XMVECTOR adjustment = DirectX::XMVector3Rotate(absDirection, rotationVector);
+
+	// Load current position into an XMVECTOR and add the adjustment to the current position
+	DirectX::XMVECTOR currentPos = DirectX::XMLoadFloat3(&position);
+	DirectX::XMVECTOR newPos = DirectX::XMVectorAdd(currentPos, adjustment);
+
+	// Store the new position in place of the old position
+	DirectX::XMStoreFloat3(&position, newPos);
+}
+
+
 // --------------------------------- Getters for internal members
 DirectX::XMFLOAT3 Transform::GetPosition() { return position; }
 DirectX::XMFLOAT3 Transform::GetPitchYawRoll() { return rotation; }
