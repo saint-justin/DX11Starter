@@ -1,6 +1,7 @@
 #include "Entity.h"
 
-Entity::Entity(Mesh* _mesh) {
+Entity::Entity(Mesh* _mesh)
+{
 	mesh = _mesh;
 }
 

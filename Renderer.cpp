@@ -4,12 +4,10 @@
 #include <DirectXMath.h>
 
 // For fancy position displacement
-#include <chrono>
-//#include <time.h>
 #include <cmath>
 
 
-Renderer::Renderer() {
+Renderer::Renderer(Microsoft::WRL::ComPtr<ID3D11VertexShader> _vertexShader, Microsoft::WRL::ComPtr<ID3D11PixelShader> _pixelShader) {
 	printf("---> Renderer loaded\n");
 }
 
@@ -23,6 +21,12 @@ Renderer::~Renderer() {
 // Init function used to generate entities out of meshes once the meshes have been created
 void Renderer::Init() 
 {
+	// Create some temporary variables to represent colors
+	DirectX::XMFLOAT4 red = DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+	DirectX::XMFLOAT4 green = DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
+	DirectX::XMFLOAT4 blue = DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
+	DirectX::XMFLOAT4 white = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+
 	// Standard, normal meshes
 	Entity ent1 = Entity(meshes[0]);
 	Entity ent2 = Entity(meshes[1]);
@@ -34,7 +38,6 @@ void Renderer::Init()
 
 	Entity ent1b = Entity(meshes[0]);
 	ent1b.GetTransform()->SetScale(1.2f, 1.2f, 1.2f);
-	//ent1a.GetTransform()->MoveAbsolute(std::sinf())
 
 	// Setting the entities into the entity array
 	entities.push_back(ent1);
@@ -62,9 +65,10 @@ void Renderer::ClearBackground(Microsoft::WRL::ComPtr<ID3D11DeviceContext> conte
 
 // Cycles through all the meshes the renderer has a references to and renders them on the rendertarget to get presented to the screen
 void Renderer::DrawMeshes(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, 
-	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader, 
+	Microsoft::WRL::ComPtr<ID3D11Buffer> vsConstantBuffer,
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader,
-	Microsoft::WRL::ComPtr<ID3D11Buffer> vsConstantBuffer)
+	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader,
+	Camera* camera)
 {
 	// Basically substituting a real timer for this garbage for now
 	counter += 0.01f;
@@ -77,6 +81,8 @@ void Renderer::DrawMeshes(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
 	// Setting up the vertex shader's external data data
 	VertexShaderExternalData vsData;
 	vsData.colorTint = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	vsData.projMatrix = camera->GetProjectionMatrix();
+	vsData.viewMatrix = camera->GetViewMatrix();
 
 	for (int i = 0; i < entities.size(); i++)
 	{

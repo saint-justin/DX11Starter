@@ -18,6 +18,7 @@ public:
 	DirectX::XMFLOAT3 GetPitchYawRoll();
 	DirectX::XMFLOAT3 GetScale();
 	DirectX::XMFLOAT4X4 GetWorldMatrix();
+	DirectX::XMVECTOR GetForwardVector();
 	bool GetMatrixDirty();
 
 	// Collection of transformers that adjust transformation values
@@ -34,8 +35,8 @@ private:
 
 	// Position, rotation, and scale for object tracking
 	DirectX::XMFLOAT3 position;
-	DirectX::XMFLOAT3 rotation;
-	DirectX::XMFLOAT3 scale;		// Note: Could be updated to quaternions for more robust rotations in the future
+	DirectX::XMFLOAT3 rotation;  // Note: Could be updated to quaternions for more robust rotations in the future
+	DirectX::XMFLOAT3 scale;		
 
 	// Boolean to track if we need to rebuild the world matrix before rendering
 	bool matrixDirty;

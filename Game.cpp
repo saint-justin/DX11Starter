@@ -32,8 +32,9 @@ Game::Game(HINSTANCE hInstance)
 	printf("Console window created successfully.  Feel free to printf() here.\n");
 #endif
 
-	// Setting up renderer
-	renderer = new Renderer();
+	// Setting up renderer and camera
+	renderer = new Renderer(vertexShader, pixelShader);
+	camera = new Camera(0, 0, -5, (float)this->width / this->height);
 }
 
 // --------------------------------------------------------
@@ -49,6 +50,7 @@ Game::~Game()
 	//   to call Release() on each DirectX object created in Game
 
 	delete renderer;
+	delete camera;
 }
 
 // --------------------------------------------------------
@@ -80,8 +82,6 @@ void Game::Init()
 	cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	cbDesc.Usage = D3D11_USAGE_DYNAMIC;
 	device->CreateBuffer(&cbDesc, 0, vsConstantBuffer.GetAddressOf());
-
-
 }
 
 // --------------------------------------------------------
@@ -216,6 +216,9 @@ void Game::OnResize()
 {
 	// Handle base-level DX resize stuff
 	DXCore::OnResize();
+
+	// Adjust the camera matrix
+	camera->UpdateProjectionMatrix((float)this->width / this->height);
 }
 
 // --------------------------------------------------------
@@ -226,6 +229,9 @@ void Game::Update(float deltaTime, float totalTime)
 	// Quit if the escape key is pressed
 	if (GetAsyncKeyState(VK_ESCAPE))
 		Quit();
+
+	// Update the camera
+	camera->Update(deltaTime, this->hWnd);
 }
 
 // --------------------------------------------------------
@@ -235,7 +241,7 @@ void Game::Draw(float deltaTime, float totalTime)
 {
 	// Clear the background then draw the meshes
 	renderer->ClearBackground(context, backBufferRTV, depthStencilView);
-	renderer->DrawMeshes(context, vertexShader, pixelShader, vsConstantBuffer);
+	renderer->DrawMeshes(context, vsConstantBuffer, pixelShader, vertexShader, camera);
 
 	// Present the back buffer to the user
 	swapChain->Present(0, 0);

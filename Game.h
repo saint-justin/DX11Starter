@@ -4,6 +4,7 @@
 #include "Mesh.h"
 #include "Renderer.h"
 #include "BufferStructs.h"
+#include "Camera.h"
 
 #include <DirectXMath.h>
 #include <wrl/client.h> // Used for ComPtr - a smart pointer for COM objects
@@ -51,5 +52,8 @@ private:
 
 	// Constant Buffer
 	Microsoft::WRL::ComPtr<ID3D11Buffer> vsConstantBuffer;
+
+	// Camera
+	Camera* camera;
 };
 
