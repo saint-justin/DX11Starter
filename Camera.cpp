@@ -44,7 +44,7 @@ void Camera::Update(float deltaTime, HWND windowHandle)
 {
 	// Placeholder speeds
 	float moveSpeed = 5.0f * deltaTime;
-	float mouseLookSpeed = 5.0f * deltaTime;
+	float mouseLookSpeed = 50.0f * deltaTime;
 
 	// Update positioning based on keyboard inputs W, A, S, D, X, & Spacebar
 	if (GetAsyncKeyState('W') & 0x8000) { transform.MoveRelative(0, 0, moveSpeed); }			// Forward
@@ -54,26 +54,22 @@ void Camera::Update(float deltaTime, HWND windowHandle)
 	if (GetAsyncKeyState(VK_SPACE) & 0x8000) { transform.MoveAbsolute(0, moveSpeed, 0); }		// Up
 	if (GetAsyncKeyState('X') & 0x8000) { transform.MoveAbsolute(0, moveSpeed * -1.0f, 0); }	// Down
 
-	// Update mouse position if left mouse is held down  <-- This mouse setup is super jank and not working as expected
-	if (GetAsyncKeyState(VK_LBUTTON) & 0x8000) {
-		// Get updated mouse position
-		POINT newMousePos = {};
-		GetCursorPos(&newMousePos);
-		ScreenToClient(windowHandle, &newMousePos);
+	// Update mouse position if left mouse is held down 
+	POINT newMousePos = {};
+	GetCursorPos(&newMousePos);
+	ScreenToClient(windowHandle, &newMousePos);
 
-		// Find the difference
+	// Check if the player's traing to actually move the camera
+	if (GetAsyncKeyState(VK_LBUTTON) & 0x8000) {
 		float mouseDiffX = (mousePos.x - newMousePos.x) * mouseLookSpeed * deltaTime;
 		float mouseDiffY = (mousePos.y - newMousePos.y) * mouseLookSpeed * deltaTime;
-
-		if (mouseDiffX != 0 || mouseDiffX != 0) printf("X Diff: %f    Y Diff: %f \n", mouseDiffX, mouseDiffY);
+		//if (mouseDiffX != 0 || mouseDiffX != 0) printf("X Diff: %f    Y Diff: %f \n", mouseDiffX, mouseDiffY);
 
 		// Adjust the camera based on mouse movement
 		DirectX::XMFLOAT3 oldRot = transform.GetPitchYawRoll();
 		transform.SetRotation(oldRot.x + mouseDiffY, oldRot.y + mouseDiffX, oldRot.z);
-
-		// Update the mouse position to reflect the new one
-		mousePos = newMousePos;
 	}
+	mousePos = newMousePos;
 
 	// Update the view matrix to align with new positioning
 	UpdateViewMatrix();
