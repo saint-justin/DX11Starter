@@ -2,6 +2,7 @@
 
 #include "DXCore.h"
 #include "Mesh.h"
+#include "Material.h"
 #include "Renderer.h"
 #include "BufferStructs.h"
 #include "Camera.h"
@@ -55,5 +56,10 @@ private:
 
 	// Camera
 	Camera* camera;
+
+	// Entities and Materials
+	std::vector<Mesh*> meshes;
+	std::vector<Material*> materials;
+	std::vector<Entity> entities;
 };
 

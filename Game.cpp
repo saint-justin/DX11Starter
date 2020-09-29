@@ -44,13 +44,18 @@ Game::Game(HINSTANCE hInstance)
 // --------------------------------------------------------
 Game::~Game()
 {
-	// Note: Since we're using smart pointers (ComPtr),
-	// we don't need to explicitly clean up those DirectX objects
-	// - If we weren't using smart pointers, we'd need
-	//   to call Release() on each DirectX object created in Game
+	// Clean up all of our normal pointers to items on the heap
 
 	delete renderer;
 	delete camera;
+
+	for (int i = 0; i < meshes.size(); i++) {
+		delete meshes[i];
+	}
+
+	for (int i = 0; i < materials.size(); i++) {
+		delete materials[i];
+	}
 }
 
 // --------------------------------------------------------
@@ -168,6 +173,17 @@ void Game::CreateBasicGeometry()
 	XMFLOAT4 blue = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
 	XMFLOAT4 white = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
+	// Generating materials to be used by different meshes
+	Material* redMat = new Material(red, pixelShader, vertexShader);
+	Material* greenMat = new Material(green, pixelShader, vertexShader);
+	Material* blueMat = new Material(blue, pixelShader, vertexShader);
+	Material* whiteMat = new Material(white, pixelShader, vertexShader);
+
+	materials.push_back(redMat);
+	materials.push_back(greenMat);
+	materials.push_back(blueMat);
+	materials.push_back(whiteMat);
+
 	// Generating three basic meshes that will be used to test entities
 	Vertex vertices01[] =
 	{
@@ -200,12 +216,29 @@ void Game::CreateBasicGeometry()
 	Mesh* mesh2 = new Mesh(vertices02, sizeof(vertices02), indices02, sizeof(indices02), device);
 	Mesh* mesh3 = new Mesh(vertices03, sizeof(vertices03), indices03, sizeof(indices03), device);
 
-	renderer->meshes.push_back(mesh1);
-	renderer->meshes.push_back(mesh2);
-	renderer->meshes.push_back(mesh3);
+	meshes.push_back(mesh1);
+	meshes.push_back(mesh2);
+	meshes.push_back(mesh3);
 
-	// Now that the renderer has the meshes, turn them into entities
-	renderer->Init();
+	// Standard, normal meshes
+	Entity ent1 = Entity(meshes[0], materials[0]);
+	Entity ent2 = Entity(meshes[1], materials[1]);
+	Entity ent3 = Entity(meshes[2], materials[2]);
+
+	// Fancy meshes
+	Entity ent1a = Entity(meshes[0], materials[0]);
+	ent1a.GetTransform()->SetPosition(0.0f, 0.0f, 0.0f);
+
+	Entity ent1b = Entity(meshes[0], materials[0]);
+	ent1b.GetTransform()->SetScale(1.2f, 1.2f, 1.2f);
+
+	// Setting the entities into the entity array
+	entities.push_back(ent1);
+	entities.push_back(ent2);
+	entities.push_back(ent3);
+	entities.push_back(ent1a);
+	entities.push_back(ent1b);
+
 }
 
 // --------------------------------------------------------
@@ -241,7 +274,7 @@ void Game::Draw(float deltaTime, float totalTime)
 {
 	// Clear the background then draw the meshes
 	renderer->ClearBackground(context, backBufferRTV, depthStencilView);
-	renderer->DrawMeshes(context, vsConstantBuffer, pixelShader, vertexShader, camera);
+	renderer->DrawMeshes(context, vsConstantBuffer, entities, camera);
 
 	// Present the back buffer to the user
 	swapChain->Present(0, 0);

@@ -9,6 +9,8 @@
 
 Renderer::Renderer(Microsoft::WRL::ComPtr<ID3D11VertexShader> _vertexShader, Microsoft::WRL::ComPtr<ID3D11PixelShader> _pixelShader) {
 	printf("---> Renderer loaded\n");
+
+	counter = 0.0f;
 }
 
 Renderer::~Renderer() {
@@ -16,36 +18,6 @@ Renderer::~Renderer() {
 		delete meshes[i];
 	}
 	printf("---> Renderer unloaded\n");
-}
-
-// Init function used to generate entities out of meshes once the meshes have been created
-void Renderer::Init() 
-{
-	// Create some temporary variables to represent colors
-	DirectX::XMFLOAT4 red = DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-	DirectX::XMFLOAT4 green = DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
-	DirectX::XMFLOAT4 blue = DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
-	DirectX::XMFLOAT4 white = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-
-	// Standard, normal meshes
-	Entity ent1 = Entity(meshes[0]);
-	Entity ent2 = Entity(meshes[1]);
-	Entity ent3 = Entity(meshes[2]);
-
-	// Fancy meshes
-	Entity ent1a = Entity(meshes[0]);
-	ent1a.GetTransform()->SetPosition(0.0f, 0.0f, 0.0f);
-
-	Entity ent1b = Entity(meshes[0]);
-	ent1b.GetTransform()->SetScale(1.2f, 1.2f, 1.2f);
-
-	// Setting the entities into the entity array
-	entities.push_back(ent1);
-	entities.push_back(ent2);
-	entities.push_back(ent3);
-
-	entities.push_back(ent1a);
-	entities.push_back(ent1b);
 }
 
 void Renderer::ClearBackground(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, Microsoft::WRL::ComPtr<ID3D11RenderTargetView> backBufferRTV, Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthStencilView) {
@@ -64,10 +36,10 @@ void Renderer::ClearBackground(Microsoft::WRL::ComPtr<ID3D11DeviceContext> conte
 }
 
 // Cycles through all the meshes the renderer has a references to and renders them on the rendertarget to get presented to the screen
-void Renderer::DrawMeshes(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, 
+void Renderer::DrawMeshes(
+	Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
 	Microsoft::WRL::ComPtr<ID3D11Buffer> vsConstantBuffer,
-	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader,
-	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader,
+	std::vector<Entity> entities,
 	Camera* camera)
 {
 	// Basically substituting a real timer for this garbage for now
@@ -78,7 +50,7 @@ void Renderer::DrawMeshes(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
 	entities[3].GetTransform()->SetRotation(0.0f, 0.0f, counter * 1.5f);
 	entities[4].GetTransform()->SetScale(std::sin(counter) * 1.5f, std::sin(counter) * 1.5f, 1.0f);
 
-	// Setting up the vertex shader's external data data
+	// Setting up the vertex shader's external data
 	VertexShaderExternalData vsData;
 	vsData.colorTint = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	vsData.projMatrix = camera->GetProjectionMatrix();
@@ -90,8 +62,8 @@ void Renderer::DrawMeshes(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
 		vsData.worldMatrix = entities[i].GetTransform()->GetWorldMatrix();
 
 		// Set the vertex and pixel shaders to use
-		context->VSSetShader(vertexShader.Get(), 0, 0);
-		context->PSSetShader(pixelShader.Get(), 0, 0);
+		context->VSSetShader(entities[i].GetMaterial()->vertexShader.Get(), 0, 0);
+		context->PSSetShader(entities[i].GetMaterial()->pixelShader.Get(), 0, 0);
 
 		// Set buffers in the input assembler
 		UINT stride = sizeof(Vertex);

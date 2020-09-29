@@ -7,14 +7,16 @@ class Entity
 {
 public:
 	// Initializes mesh w/ a pointer to a base mesh
-	Entity(Mesh* _mesh);
+	Entity(Mesh* _mesh, Material* _material);
 	
 	// Getters
 	Mesh* GetMesh();
 	Transform* GetTransform();
+	Material* GetMaterial();
 
 private:
 	Mesh* mesh;
+	Material* material;
 	Transform transform;
 };
 

@@ -15,20 +15,19 @@ class Renderer
 public:
 	Renderer(Microsoft::WRL::ComPtr<ID3D11VertexShader> _vertexShader, Microsoft::WRL::ComPtr<ID3D11PixelShader> _pixelShader);
 	~Renderer();
-	void Init();	// Used to generate entities
 
-	void ClearBackground(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
+	void ClearBackground(
+		Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
 		Microsoft::WRL::ComPtr<ID3D11RenderTargetView> backBufferRTV,
 		Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthStencilView);
 
-	void DrawMeshes(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
+	void DrawMeshes(
+		Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
 		Microsoft::WRL::ComPtr<ID3D11Buffer> vsConstantBuffer,
-		Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader,
-		Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader,
+		std::vector<Entity> entities,
 		Camera* camera);
 		
 	std::vector<Mesh*> meshes;
-	std::vector<Entity> entities;
 
 private:
 	float counter;
