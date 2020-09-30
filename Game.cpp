@@ -101,7 +101,7 @@ void Game::CreateBasicGeometry()
 	Material* redMat = new Material(red, pixelShader, vertexShader);
 	Material* greenMat = new Material(green, pixelShader, vertexShader);
 	Material* blueMat = new Material(blue, pixelShader, vertexShader);
-	Material* whiteMat = new Material(white, pixelShader, vertexShader);s
+	Material* whiteMat = new Material(white, pixelShader, vertexShader);
 
 	// Store the materials and meshes
 	materials.push_back(redMat);
@@ -119,7 +119,7 @@ void Game::CreateBasicGeometry()
 	Entity ent1 = Entity(meshes[0], materials[0]);
 	Entity ent2 = Entity(meshes[1], materials[1]);
 	Entity ent3 = Entity(meshes[2], materials[2]);
-	ent3.GetTransform()->SetPosition(3.0f, 3.0f, 3.0f);
+	ent3.GetTransform()->SetPosition(0.0f, 3.0f, 0.0f);
 	Entity ent4 = Entity(meshes[3], materials[3]);
 	Entity ent5 = Entity(meshes[4], materials[1]);
 	Entity ent6 = Entity(meshes[5], materials[1]);

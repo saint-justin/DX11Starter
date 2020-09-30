@@ -96,7 +96,7 @@ void Transform::Scale(float x, float y, float z)
 void Transform::updateWorldMatrix()
 {
 	// Generating trans/rot/scale matrices
-	DirectX::XMMATRIX translationMatrix = DirectX::XMMatrixTranslation(position.x, position.x, position.z);
+	DirectX::XMMATRIX translationMatrix = DirectX::XMMatrixTranslation(position.x, position.y, position.z);
 	DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
 	DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(scale.x, scale.y, scale.z);
 
