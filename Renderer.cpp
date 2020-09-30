@@ -42,8 +42,7 @@ void Renderer::DrawMeshes(
 		vsData->SetMatrix4x4("view", camera->GetViewMatrix());
 		vsData->SetMatrix4x4("proj", camera->GetProjectionMatrix());
 
-		// Set the vertex and pixel shaders to use
-		entities[i].GetMaterial()->GetPixelShader()->SetShader();
+		// Set the vertex shaders to use
 		entities[i].GetMaterial()->GetVertexShader()->SetShader();
 
 		//// Set buffers in the input assembler

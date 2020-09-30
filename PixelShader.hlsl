@@ -1,34 +1,54 @@
 
 // Struct representing the data we expect to receive from earlier pipeline stages
-// - Should match the output of our corresponding vertex shader
-// - The name of the struct itself is unimportant
-// - The variable names don't have to match other shaders (just the semantics)
-// - Each variable must have a semantic, which defines its usage
 struct VertexToPixel
 {
-	// Data type
-	//  |
-	//  |   Name          Semantic
-	//  |    |                |
-	//  v    v                v
 	float4 position		: SV_POSITION;
 	float4 color		: COLOR;
+	float3 normal		: NORMAL;
 };
+
+// Struct representing the data structure we're using for directional lights
+struct DirectionalLight
+{
+	float3 ambientColor;
+	float3 diffuseColor;
+	float3 direction;
+};
+
+// Constant buffer where we pass in light information
+cbuffer LightData: register(b0)
+{
+	DirectionalLight directionalLight1;
+	DirectionalLight directionalLight2;
+	DirectionalLight directionalLight3;
+}
+
+// Calculates and saturates n dot l
+float ndotl(float n, float l)
+{
+	return saturate(dot(n, normalize(-l)));
+}
+
 
 // --------------------------------------------------------
 // The entry point (main method) for our pixel shader
-// 
-// - Input is the data coming down the pipeline (defined by the struct)
-// - Output is a single color (float4)
-// - Has a special semantic (SV_TARGET), which means 
-//    "put the output of this into the current render target"
-// - Named "main" because that's the default the shader compiler looks for
 // --------------------------------------------------------
 float4 main(VertexToPixel input) : SV_TARGET
 {
-	// Just return the input color
-	// - This color (like most values passing through the rasterizer) is 
-	//   interpolated for each pixel between the corresponding vertices 
-	//   of the triangle we're rendering
-	return input.color;
+	VertexToPixel output;
+	input.normal = normalize(input.normal);
+
+	float ndl1 = ndotl(input.normal, directionalLight1.direction);
+	float ndl2 = ndotl(input.normal, directionalLight2.direction);
+	float ndl3 = ndotl(input.normal, directionalLight3.direction);
+
+	float3 diffuse1 = directionalLight1.diffuseColor * input.color.rgb * ndl1;
+	float3 diffuse2 = directionalLight2.diffuseColor * input.color.rgb * ndl2;
+	float3 diffuse3 = directionalLight3.diffuseColor * input.color.rgb * ndl3;
+
+	float3 ambient1 = directionalLight1.ambientColor.rgb * input.color.rgb;
+	float3 ambient2 = directionalLight2.ambientColor.rgb * input.color.rgb;
+	float3 ambient3 = directionalLight3.ambientColor.rgb * input.color.rgb;
+
+	return float4(diffuse1 + diffuse2 + diffuse3 + ambient1 + ambient2 + ambient3, 1);
 }

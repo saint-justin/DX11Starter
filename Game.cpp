@@ -73,6 +73,19 @@ void Game::Init()
 	// Tell the input assembler stage of the pipeline what kind of
 	// geometric primitives (points, lines or triangles) we want to draw.  
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// Setting up light info
+	light1.ambientColor =	{ 0.01f, 0.01f, 0.01f };
+	light1.diffuseColor =	{ 0.1f, 0.1f, 0.1f };
+	light1.direction =		{ 1.0f, -1.0f, 0.0f };
+
+	light2.ambientColor = { 0.01f, 0.01f, 0.01f };
+	light2.diffuseColor = { 0.4f, 0.1f, 0.1f };
+	light2.direction = { 1.0f, -0.20f, -0.3f };
+
+	light3.ambientColor = { 0.00f, 0.02f, 0.1f };
+	light3.diffuseColor = { 0.7f, 1.0f, 0.7f };
+	light3.direction = { 0.0f, 0.5f, -1.0f };
 }
 
 // --------------------------------------------------------
@@ -178,6 +191,14 @@ void Game::Draw(float deltaTime, float totalTime)
 {
 	// Clear the background then draw the meshes
 	renderer->ClearBackground(context, backBufferRTV, depthStencilView);
+
+	// Passing lighting information
+	pixelShader->SetData("directionalLight1", &light1, sizeof(DirectionalLight));
+	pixelShader->SetData("directionalLight2", &light2, sizeof(DirectionalLight));
+	pixelShader->SetData("directionalLight3", &light3, sizeof(DirectionalLight));
+	pixelShader->CopyAllBufferData();
+	pixelShader->SetShader();
+
 	renderer->DrawMeshes(context, entities, camera);
 
 	// Present the back buffer to the user

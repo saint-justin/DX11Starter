@@ -29,6 +29,7 @@ struct VertexToPixel
 {
 	float4 position		: SV_POSITION;	// XYZW position (System Value Position)
 	float4 color		: COLOR;        // RGBA color
+	float3 normal		: NORMAL;		// Normal position
 };
 
 // --------------------------------------------------------
@@ -45,6 +46,7 @@ VertexToPixel main( VertexShaderInput input )
 
 	matrix wvp = mul(proj, mul(view, world));
 	output.position = mul(wvp, float4(input.position, 1.0f));
+	output.normal = mul((float3x3)world, input.normal);			// TODO: Update the world position to be the inverse transpose when passing in
 
 	// Pass the color through 
 	output.color = (1, 1, 1, 1) * colorTint;
