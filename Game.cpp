@@ -115,14 +115,25 @@ void Game::CreateBasicGeometry()
 	meshes.push_back(new Mesh(GetFullPathTo("/Assets/cone.obj").c_str(), device));
 	meshes.push_back(new Mesh(GetFullPathTo("/Assets/torus.obj").c_str(), device));
 
-	// Standard, normal meshes
+	// Setting up meshes and materials in entities then spreading 'em out
 	Entity ent1 = Entity(meshes[0], materials[0]);
+	ent1.GetTransform()->SetPosition(-3.0f, 0.0f, 0.0f);
+
 	Entity ent2 = Entity(meshes[1], materials[1]);
+	ent2.GetTransform()->SetPosition(-1.5f, 0.0f, 0.0f);
+	
 	Entity ent3 = Entity(meshes[2], materials[2]);
-	ent3.GetTransform()->SetPosition(0.0f, 3.0f, 0.0f);
+	ent3.GetTransform()->SetPosition(0.0f, 0.0f, 0.0f);
+	ent3.GetTransform()->SetScale(0.75f, 0.75f, 0.75f);
+	
 	Entity ent4 = Entity(meshes[3], materials[3]);
+	ent4.GetTransform()->SetPosition(1.5f, 0.0f, 0.0f);
+	
 	Entity ent5 = Entity(meshes[4], materials[1]);
+	ent5.GetTransform()->SetPosition(3.0f, 0.0f, 0.0f);
+	
 	Entity ent6 = Entity(meshes[5], materials[1]);
+	ent6.GetTransform()->SetPosition(4.5f, 0.0f, 0.0f);
 
 	// Setting the entities into the entity array
 	entities.push_back(ent1);
