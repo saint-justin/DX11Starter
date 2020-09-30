@@ -1,6 +1,7 @@
 #pragma once
 #include <d3d11.h>
 #include <wrl/client.h>
+#include <fstream>
 
 #include "Vertex.h"
 
@@ -9,6 +10,8 @@ class Mesh
 public:
 	// Setup
 	Mesh(Vertex verts[], int numVerts, unsigned int indices[], int numIndices, Microsoft::WRL::ComPtr<ID3D11Device> device);
+	Mesh(const char* path, Microsoft::WRL::ComPtr<ID3D11Device> device);
+	void GenerateBuffer(Vertex verts[], int numVerts, unsigned int indices[], int numIndices, Microsoft::WRL::ComPtr<ID3D11Device> device);
 
 	// Vertex and Index buffers
 	Microsoft::WRL::ComPtr<ID3D11Buffer> GetVertexBuffer();

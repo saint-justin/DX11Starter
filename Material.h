@@ -1,5 +1,7 @@
 #pragma once
 #include "Material.h"
+#include "SimpleShader.h"
+
 #include <wrl/client.h> 
 #include <d3d11.h>
 #include <DirectXMath.h>
@@ -9,12 +11,17 @@ class Material
 public:
 	Material(
 		DirectX::XMFLOAT4 _colorTint, 
-		Microsoft::WRL::ComPtr<ID3D11PixelShader> _pixelShader, 
-		Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader
+		SimplePixelShader* _pixelShader, 
+		SimpleVertexShader* vertexShader
 	);
 
+	DirectX::XMFLOAT4 GetColorTint();
+	SimplePixelShader* GetPixelShader();
+	SimpleVertexShader* GetVertexShader();
+
+private:
 	DirectX::XMFLOAT4 colorTint;
-	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
-	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
+	SimplePixelShader* pixelShader;
+	SimpleVertexShader* vertexShader;
 };
 

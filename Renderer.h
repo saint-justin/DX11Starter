@@ -4,6 +4,7 @@
 #include "BufferStructs.h"
 #include "Entity.h"
 #include "Camera.h"
+#include "SimpleShader.h"
 
 #include <d3d11.h>
 #include <wrl/client.h>
@@ -13,7 +14,7 @@
 class Renderer
 {
 public:
-	Renderer(Microsoft::WRL::ComPtr<ID3D11VertexShader> _vertexShader, Microsoft::WRL::ComPtr<ID3D11PixelShader> _pixelShader);
+	Renderer();
 	~Renderer();
 
 	void ClearBackground(
@@ -23,13 +24,7 @@ public:
 
 	void DrawMeshes(
 		Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
-		Microsoft::WRL::ComPtr<ID3D11Buffer> vsConstantBuffer,
 		std::vector<Entity> entities,
 		Camera* camera);
-		
-	std::vector<Mesh*> meshes;
-
-private:
-	float counter;
 };
 

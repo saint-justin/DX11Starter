@@ -16,7 +16,8 @@ cbuffer ExternalData : register(b0)
 struct VertexShaderInput
 { 
 	float3 position		: POSITION;     // XYZ position
-	float4 color		: COLOR;        // RGBA color
+	float4 normal		: NORMAL;        // RGBA color
+	float2 uv			: TEXCOORD;        // RGBA color
 };
 
 // Struct representing the data we're sending down the pipeline
@@ -46,7 +47,7 @@ VertexToPixel main( VertexShaderInput input )
 	output.position = mul(wvp, float4(input.position, 1.0f));
 
 	// Pass the color through 
-	output.color = input.color * colorTint;
+	output.color = (1, 1, 1, 1) * colorTint;
 
 	// Whatever we return will make its way through the pipeline to the
 	// next programmable stage we're using (the pixel shader for now)
