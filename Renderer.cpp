@@ -42,13 +42,9 @@ void Renderer::DrawMeshes(
 		vsData->SetMatrix4x4("view", camera->GetViewMatrix());
 		vsData->SetMatrix4x4("proj", camera->GetProjectionMatrix());
 
-		// Set the vertex shaders to use
-		entities[i].GetMaterial()->GetVertexShader()->SetShader();
-
-		//// Set buffers in the input assembler
+		// Set buffers in the input assembler
 		UINT stride = sizeof(Vertex);
 		UINT offset = 0;
-
 		context->IASetVertexBuffers(0, 1, entities[i].GetMesh()->GetVertexBuffer().GetAddressOf(), &stride, &offset);
 		context->IASetIndexBuffer(entities[i].GetMesh()->GetIndexBuffer().Get(), DXGI_FORMAT_R32_UINT, 0);
 

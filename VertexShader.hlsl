@@ -10,26 +10,22 @@ cbuffer ExternalData : register(b0)
 
 // Struct representing a single vertex worth of data
 // - This should match the vertex definition in our C++ code
-// - By "match", I mean the size, order and number of members
-// - The name of the struct itself is unimportant, but should be descriptive
-// - Each variable must have a semantic, which defines its usage
 struct VertexShaderInput
 { 
 	float3 position		: POSITION;     // XYZ position
-	float4 normal		: NORMAL;        // RGBA color
-	float2 uv			: TEXCOORD;        // RGBA color
+	float4 normal		: NORMAL;       // Vertex Normal
+	float2 uv			: TEXCOORD;     // Vertex UV info
 };
 
 // Struct representing the data we're sending down the pipeline
 // - Should match our pixel shader's input (hence the name: Vertex to Pixel)
-// - At a minimum, we need a piece of data defined tagged as SV_POSITION
-// - The name of the struct itself is unimportant, but should be descriptive
-// - Each variable must have a semantic, which defines its usage
 struct VertexToPixel
 {
-	float4 position		: SV_POSITION;	// XYZW position (System Value Position)
-	float4 color		: COLOR;        // RGBA color
-	float3 normal		: NORMAL;		// Normal position
+	float4 position	: SV_POSITION;
+	float4 color	: COLOR;
+	float2 uv		: TEXCOORD;
+	float3 normal	: NORMAL;
+	float3 worldPos	: POSITION;
 };
 
 // --------------------------------------------------------
@@ -44,12 +40,17 @@ VertexToPixel main( VertexShaderInput input )
 	// Set up output struct
 	VertexToPixel output;
 
+	// Calculate and apply world view projection matrix
 	matrix wvp = mul(proj, mul(view, world));
 	output.position = mul(wvp, float4(input.position, 1.0f));
-	output.normal = mul((float3x3)world, input.normal);			// TODO: Update the world position to be the inverse transpose when passing in
+	output.normal = normalize(mul((float3x3)world, input.normal));			// TODO: Update the world position to be the inverse transpose when passing in
+	
+	// Calculate vert's world position
+	output.worldPos = mul(world, float4(input.position, 1.0f)).xyz;
 
-	// Pass the color through 
-	output.color = (1, 1, 1, 1) * colorTint;
+	// Pass the color and uv through 
+	output.color = colorTint;
+	output.uv = input.uv;
 
 	// Whatever we return will make its way through the pipeline to the
 	// next programmable stage we're using (the pixel shader for now)

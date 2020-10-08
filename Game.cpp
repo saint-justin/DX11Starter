@@ -5,6 +5,7 @@
 // Needed for a helper function to read compiled shader files from the hard drive
 #pragma comment(lib, "d3dcompiler.lib")
 #include <d3dcompiler.h>
+#include "WICTextureLoader.h"
 
 // For the DirectX Math library
 using namespace DirectX;
@@ -86,6 +87,35 @@ void Game::Init()
 	light3.ambientColor = { 0.00f, 0.02f, 0.1f };
 	light3.diffuseColor = { 0.7f, 1.0f, 0.7f };
 	light3.direction = { 0.0f, 0.5f, -1.0f };
+
+	// Load in our textures
+	CreateWICTextureFromFile(
+		device.Get(),
+		context.Get(),
+		GetFullPathTo_Wide(L"../../Assets/image_1.png").c_str(),
+		nullptr,
+		textureSRV1.GetAddressOf()
+	);
+
+	CreateWICTextureFromFile(
+		device.Get(),
+		context.Get(),
+		GetFullPathTo_Wide(L"../../Assets/image_2.png").c_str(),
+		nullptr,
+		textureSRV2.GetAddressOf()
+	);
+
+	// Set up our sampler description
+	D3D11_SAMPLER_DESC sampDesc = {};
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.Filter = D3D11_FILTER_ANISOTROPIC;
+	sampDesc.MaxAnisotropy = 8;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	
+	// Create the sampler
+	device->CreateSamplerState(&sampDesc, samplerState.GetAddressOf());
 }
 
 // --------------------------------------------------------
@@ -111,10 +141,10 @@ void Game::CreateBasicGeometry()
 	XMFLOAT4 white = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// Generating materials to be used by different meshes
-	Material* redMat = new Material(red, pixelShader, vertexShader);
-	Material* greenMat = new Material(green, pixelShader, vertexShader);
-	Material* blueMat = new Material(blue, pixelShader, vertexShader);
-	Material* whiteMat = new Material(white, pixelShader, vertexShader);
+	Material* redMat = new Material(red, pixelShader, vertexShader, textureSRV1);
+	Material* greenMat = new Material(green, pixelShader, vertexShader, textureSRV1);
+	Material* blueMat = new Material(blue, pixelShader, vertexShader, textureSRV1);
+	Material* whiteMat = new Material(white, pixelShader, vertexShader, textureSRV1);
 
 	// Store the materials and meshes
 	materials.push_back(redMat);
@@ -192,13 +222,26 @@ void Game::Draw(float deltaTime, float totalTime)
 	// Clear the background then draw the meshes
 	renderer->ClearBackground(context, backBufferRTV, depthStencilView);
 
-	// Passing lighting information
-	pixelShader->SetData("directionalLight1", &light1, sizeof(DirectionalLight));
-	pixelShader->SetData("directionalLight2", &light2, sizeof(DirectionalLight));
-	pixelShader->SetData("directionalLight3", &light3, sizeof(DirectionalLight));
-	pixelShader->CopyAllBufferData();
+	// Set my shaders
 	pixelShader->SetShader();
+	vertexShader->SetShader();
 
+	// Push in pixel shader information
+	pixelShader->SetFloat3("lightColor", DirectX::XMFLOAT3(1.0f, 0.3f, 0.3f));
+	pixelShader->SetFloat3("lightDir", DirectX::XMFLOAT3(1.0f, -2.0f, 0.0f));
+	pixelShader->SetFloat("lightIntensity", 2.0f);
+
+	pixelShader->SetFloat3("pointLightPos", DirectX::XMFLOAT3(0.0f, 3.0f, 1.0f));
+	pixelShader->SetFloat3("pointLightColor", DirectX::XMFLOAT3(0, 0.5f, 0));
+	pixelShader->SetFloat("pointLightIntensity", 2.0f);
+
+	pixelShader->SetFloat3("environmentAmbient", DirectX::XMFLOAT3(0.1f, 0.1f, 0.1f));
+	pixelShader->SetFloat("specularIntensity", 2.0f);
+
+	// Bind textures and sampler state
+	pixelShader->SetShaderResourceView("diffuseTexture", textureSRV1.Get());
+
+	// Actually draw the meshes
 	renderer->DrawMeshes(context, entities, camera);
 
 	// Present the back buffer to the user

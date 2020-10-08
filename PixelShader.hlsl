@@ -1,34 +1,47 @@
+// Cbuffer struct for passing in exterior data
+cbuffer externalData : register(b0)
+{
+	float3 environmentAmbient;
+	float specularIntensity;
 
-// Struct representing the data we expect to receive from earlier pipeline stages
+	float3 lightColor;
+	float3 lightDir;
+	float3 lightIntensitiy;
+
+	float3 pointLightPos;
+	float3 pointLightColor;
+	float3 pointLightIntensity;
+
+	float3 cameraPos;
+};
+
+// Input struct that we get over from the vertex shader
 struct VertexToPixel
 {
-	float4 position		: SV_POSITION;
-	float4 color		: COLOR;
-	float3 normal		: NORMAL;
+	float4 position	: SV_POSITION;
+	float4 color	: COLOR;
+	float2 uv		: TEXCOORD;
+	float3 normal	: NORMAL;
+	float3 worldPos	: POSITION;
 };
 
-// Struct representing the data structure we're using for directional lights
-struct DirectionalLight
-{
-	float3 ambientColor;
-	float3 diffuseColor;
-	float3 direction;
-};
+// Textures and samplers
+Texture2D diffuseTexture	: register(t0);
+SamplerState basicSampler	: register(s0);
+// Texture2D specularTexture	: register(t1); // TODO
 
-// Constant buffer where we pass in light information
-cbuffer LightData: register(b0)
+
+// Calculates the diffuse amount given the surface and direction from light
+float Diffuse(float3 normal, float3 lightDir) 
 {
-	DirectionalLight directionalLight1;
-	DirectionalLight directionalLight2;
-	DirectionalLight directionalLight3;
+	return saturate(dot(normal, -lightDir));
 }
 
-// Calculates and saturates n dot l
-float ndotl(float n, float l)
+// Calculates the specular we'd get from a Phong model
+float Specular(float3 normal, float3 lightDir, float3 toCamera, float specular)
 {
-	return saturate(dot(n, normalize(-l)));
+	return pow(saturate(dot(reflect(lightDir, normal), toCamera)), specular);
 }
-
 
 // --------------------------------------------------------
 // The entry point (main method) for our pixel shader
@@ -38,17 +51,23 @@ float4 main(VertexToPixel input) : SV_TARGET
 	VertexToPixel output;
 	input.normal = normalize(input.normal);
 
-	float ndl1 = ndotl(input.normal, directionalLight1.direction);
-	float ndl2 = ndotl(input.normal, directionalLight2.direction);
-	float ndl3 = ndotl(input.normal, directionalLight3.direction);
+	float3 toCamera = normalize(cameraPos - input.worldPos);
+	float3 normalizedLightDir = normalize(lightDir);
 
-	float3 diffuse1 = directionalLight1.diffuseColor * input.color.rgb * ndl1;
-	float3 diffuse2 = directionalLight2.diffuseColor * input.color.rgb * ndl2;
-	float3 diffuse3 = directionalLight3.diffuseColor * input.color.rgb * ndl3;
+	// Directional light
+	float directionalDiffuse = Diffuse(input.normal, normalizedLightDir);
+	float directionalSpecular = Specular(input.normal, normalizedLightDir, toCamera, 64.0f);
+	float3 directionalLightCombined = (directionalDiffuse + directionalSpecular) * lightDir * lightColor;
 
-	float3 ambient1 = directionalLight1.ambientColor.rgb * input.color.rgb;
-	float3 ambient2 = directionalLight2.ambientColor.rgb * input.color.rgb;
-	float3 ambient3 = directionalLight3.ambientColor.rgb * input.color.rgb;
+	// Point light
+	float3 pointLightDir = normalize(input.worldPos - pointLightPos);
+	float pointLightDiffuse = Diffuse(input.normal, pointLightPos);
+	float pointLightSpecular = Specular(input.normal, pointLightPos, toCamera, 64.0f);
+	float3 pointLightCombined = (pointLightDiffuse + pointLightSpecular) * pointLightIntensity * pointLightColor;
 
-	return float4(diffuse1 + diffuse2 + diffuse3 + ambient1 + ambient2 + ambient3, 1);
+	// Combining point and directional lights
+	float3 totalLight = environmentAmbient + pointLightCombined + directionalLightCombined;
+	float4 appliedTexture = diffuseTexture.Sample(basicSampler, input.uv);
+
+	return float4(totalLight * input.color.rgb * appliedTexture.rgb, 1);
 }
