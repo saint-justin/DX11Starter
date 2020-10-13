@@ -12,6 +12,7 @@ public:
 	Mesh(Vertex verts[], int numVerts, unsigned int indices[], int numIndices, Microsoft::WRL::ComPtr<ID3D11Device> device);
 	Mesh(const char* path, Microsoft::WRL::ComPtr<ID3D11Device> device);
 	void GenerateBuffer(Vertex verts[], int numVerts, unsigned int indices[], int numIndices, Microsoft::WRL::ComPtr<ID3D11Device> device);
+	void CalculateTangents(Vertex* verts, int numVerts, unsigned int* indices, int numIndices);
 
 	// Vertex and Index buffers
 	Microsoft::WRL::ComPtr<ID3D11Buffer> GetVertexBuffer();

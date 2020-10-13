@@ -75,24 +75,11 @@ void Game::Init()
 	// geometric primitives (points, lines or triangles) we want to draw.  
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	// Setting up light info
-	light1.ambientColor =	{ 0.01f, 0.01f, 0.01f };
-	light1.diffuseColor =	{ 0.1f, 0.1f, 0.1f };
-	light1.direction =		{ 1.0f, -1.0f, 0.0f };
-
-	light2.ambientColor = { 0.01f, 0.01f, 0.01f };
-	light2.diffuseColor = { 0.4f, 0.1f, 0.1f };
-	light2.direction = { 1.0f, -0.20f, -0.3f };
-
-	light3.ambientColor = { 0.00f, 0.02f, 0.1f };
-	light3.diffuseColor = { 0.7f, 1.0f, 0.7f };
-	light3.direction = { 0.0f, 0.5f, -1.0f };
-
 	// Load in our textures
 	CreateWICTextureFromFile(
 		device.Get(),
 		context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/image_1.png").c_str(),
+		GetFullPathTo_Wide(L"../../Assets/image_1.jpg").c_str(),
 		nullptr,
 		textureSRV1.GetAddressOf()
 	);
@@ -225,6 +212,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	// Set my shaders
 	pixelShader->SetShader();
 	vertexShader->SetShader();
+	pixelShader->SetSamplerState("basicSampler", samplerState.Get());
 
 	// Push in pixel shader information
 	pixelShader->SetFloat3("lightColor", DirectX::XMFLOAT3(1.0f, 0.3f, 0.3f));
@@ -240,6 +228,8 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	// Bind textures and sampler state
 	pixelShader->SetShaderResourceView("diffuseTexture", textureSRV1.Get());
+
+	pixelShader->CopyAllBufferData();
 
 	// Actually draw the meshes
 	renderer->DrawMeshes(context, entities, camera);

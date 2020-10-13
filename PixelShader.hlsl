@@ -1,3 +1,6 @@
+
+#include "ShaderShared.hlsli"
+
 // Cbuffer struct for passing in exterior data
 cbuffer externalData : register(b0)
 {
@@ -15,40 +18,15 @@ cbuffer externalData : register(b0)
 	float3 cameraPos;
 };
 
-// Input struct that we get over from the vertex shader
-struct VertexToPixel
-{
-	float4 position	: SV_POSITION;
-	float4 color	: COLOR;
-	float2 uv		: TEXCOORD;
-	float3 normal	: NORMAL;
-	float3 worldPos	: POSITION;
-};
-
 // Textures and samplers
 Texture2D diffuseTexture	: register(t0);
 SamplerState basicSampler	: register(s0);
-// Texture2D specularTexture	: register(t1); // TODO
-
-
-// Calculates the diffuse amount given the surface and direction from light
-float Diffuse(float3 normal, float3 lightDir) 
-{
-	return saturate(dot(normal, -lightDir));
-}
-
-// Calculates the specular we'd get from a Phong model
-float Specular(float3 normal, float3 lightDir, float3 toCamera, float specular)
-{
-	return pow(saturate(dot(reflect(lightDir, normal), toCamera)), specular);
-}
 
 // --------------------------------------------------------
 // The entry point (main method) for our pixel shader
 // --------------------------------------------------------
 float4 main(VertexToPixel input) : SV_TARGET
 {
-	VertexToPixel output;
 	input.normal = normalize(input.normal);
 
 	float3 toCamera = normalize(cameraPos - input.worldPos);
@@ -68,6 +46,9 @@ float4 main(VertexToPixel input) : SV_TARGET
 	// Combining point and directional lights
 	float3 totalLight = environmentAmbient + pointLightCombined + directionalLightCombined;
 	float4 appliedTexture = diffuseTexture.Sample(basicSampler, input.uv);
+
+
+	return appliedTexture;
 
 	return float4(totalLight * input.color.rgb * appliedTexture.rgb, 1);
 }

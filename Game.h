@@ -49,11 +49,6 @@ private:
 	std::vector<Material*> materials;
 	std::vector<Entity> entities;
 
-	// Lighting
-	DirectionalLight light1;
-	DirectionalLight light2;
-	DirectionalLight light3;
-
 	// Texture info
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> textureSRV1;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> textureSRV2;

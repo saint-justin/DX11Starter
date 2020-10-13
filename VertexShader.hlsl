@@ -1,3 +1,6 @@
+#include "ShaderShared.hlsli"
+// #include "ShaderFunctions.hlsli"
+
 // Creating cbuffer
 cbuffer ExternalData : register(b0)
 {
@@ -6,27 +9,6 @@ cbuffer ExternalData : register(b0)
 	matrix view;
 	matrix proj;
 }
-
-
-// Struct representing a single vertex worth of data
-// - This should match the vertex definition in our C++ code
-struct VertexShaderInput
-{ 
-	float3 position		: POSITION;     // XYZ position
-	float4 normal		: NORMAL;       // Vertex Normal
-	float2 uv			: TEXCOORD;     // Vertex UV info
-};
-
-// Struct representing the data we're sending down the pipeline
-// - Should match our pixel shader's input (hence the name: Vertex to Pixel)
-struct VertexToPixel
-{
-	float4 position	: SV_POSITION;
-	float4 color	: COLOR;
-	float2 uv		: TEXCOORD;
-	float3 normal	: NORMAL;
-	float3 worldPos	: POSITION;
-};
 
 // --------------------------------------------------------
 // The entry point (main method) for our vertex shader
