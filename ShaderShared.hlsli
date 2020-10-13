@@ -1,5 +1,5 @@
-#ifndef __GGP_SHADER_INCLUDES__
-#define __GGP_SHADER_INCLUDES__
+#ifndef __GGP_SHARED_SHADER_INFO__
+#define __GGP_SHARED_SHADER_INFO__
 
 // ---------------------- STRUCTS ----------------------
 
@@ -22,6 +22,16 @@ struct VertexToPixel
 	float3 worldPos	: POSITION;			// Position of the pixel in world space
 };
 
+// Struct to pass information from the vertex shader to the pixel shader
+struct VertexToPixelWithTangent
+{
+	float4 position	: SV_POSITION;		// Position of pixel 
+	float4 color	: COLOR;			// Base color of pixel
+	float2 uv		: TEXCOORD;			// UV coord of the pixel
+	float3 normal	: NORMAL;			// Normal at the pixel's position
+	float3 worldPos	: POSITION;			// Position of the pixel in world space
+	float3 tangent	: TANGENT;
+};
 
 // ---------------------- HELPER FUNCTIONS ----------------------
 
@@ -37,4 +47,13 @@ float Specular(float3 normal, float3 lightDir, float3 toCamera, float specular)
 	return pow(saturate(dot(reflect(lightDir, normal), toCamera)), specular);
 }
 
+
+float3x3 createTBNMatrix(float3 normal, float3 tangent) 
+{
+	normal = normalize(normal);
+	tangent = normalize(tangent);
+	tangent = normalize(tangent - normal * dot(tangent, normal));
+	float3 bitangent = cross(tangent, normal);
+	return float3x3(tangent, bitangent, normal);
+}
 #endif
