@@ -5,6 +5,7 @@
 #include "Entity.h"
 #include "Camera.h"
 #include "SimpleShader.h"
+#include "Skybox.h"
 
 #include <d3d11.h>
 #include <wrl/client.h>
@@ -24,6 +25,7 @@ public:
 
 	void DrawMeshes(
 		Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
+		Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler,
 		std::vector<Entity> entities,
 		Camera* camera);
 };

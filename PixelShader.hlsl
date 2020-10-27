@@ -27,6 +27,7 @@ SamplerState basicSampler	: register(s0);
 // --------------------------------------------------------
 float4 main(VertexToPixel input) : SV_TARGET
 {
+	//return float4(1, 0, 0, 1);
 	input.normal = normalize(input.normal);
 
 	float3 toCamera = normalize(cameraPos - input.worldPos);
@@ -46,9 +47,6 @@ float4 main(VertexToPixel input) : SV_TARGET
 	// Combining point and directional lights
 	float3 totalLight = environmentAmbient + pointLightCombined + directionalLightCombined;
 	float4 appliedTexture = diffuseTexture.Sample(basicSampler, input.uv);
-
-
-	return appliedTexture;
-
+	
 	return float4(totalLight * input.color.rgb * appliedTexture.rgb, 1);
 }

@@ -1,5 +1,4 @@
 #include "ShaderShared.hlsli"
-// #include "ShaderFunctions.hlsli"
 
 // Creating cbuffer
 cbuffer ExternalData : register(b0)

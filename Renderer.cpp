@@ -15,6 +15,7 @@ Renderer::~Renderer() {
 	printf("---> Renderer unloaded\n");
 }
 
+// Clears the background every frame to pure black
 void Renderer::ClearBackground(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, Microsoft::WRL::ComPtr<ID3D11RenderTargetView> backBufferRTV, Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthStencilView) {
 	// Background color (#000000 black) for clearing
 	const float color[4] = { 0.0f, 0.0f, 0.00f, 0.0f };
@@ -31,11 +32,19 @@ void Renderer::ClearBackground(Microsoft::WRL::ComPtr<ID3D11DeviceContext> conte
 // Cycles through all the meshes the renderer has a references to and renders them on the rendertarget to get presented to the screen
 void Renderer::DrawMeshes(
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
+	Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler,
 	std::vector<Entity> entities,
 	Camera* camera)
 {
 	for (int i = 0; i < entities.size(); i++)
 	{
+		// Set sampler, diffuse, and maybe normal textures
+		entities[i].GetMaterial()->GetPixelShader()->SetSamplerState("basicSampler", sampler.Get());
+		entities[i].GetMaterial()->GetPixelShader()->SetShaderResourceView("diffuseTexture", entities[i].GetMaterial()->GetTextureSRV().Get());
+		if (entities[i].GetMaterial()->hasNormalMap) {
+			entities[i].GetMaterial()->GetPixelShader()->SetShaderResourceView("normalTexture", entities[i].GetMaterial()->GetNormalMap().Get());
+		}
+
 		SimpleVertexShader* vsData = entities[i].GetMaterial()->GetVertexShader();
 		vsData->SetFloat4("colorTint", entities[i].GetMaterial()->GetColorTint());
 		vsData->SetMatrix4x4("world", entities[i].GetTransform()->GetWorldMatrix());
@@ -50,6 +59,11 @@ void Renderer::DrawMeshes(
 
 		// Copying to resource
 		vsData->CopyAllBufferData();
+
+		// Set the shaders and sampler state
+		entities[i].GetMaterial()->GetVertexShader()->SetShader();	// TODO: Clump together items to render based on which shader type they are
+		entities[i].GetMaterial()->GetPixelShader()->SetShader();
+		entities[i].GetMaterial()->GetPixelShader()->CopyAllBufferData();
 
 		// Do the actual drawing
 		context->DrawIndexed(entities[i].GetMesh()->GetIndexCount(), 0, 0);

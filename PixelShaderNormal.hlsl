@@ -1,4 +1,3 @@
-
 #include "ShaderShared.hlsli"
 
 // Cbuffer struct for passing in exterior data
@@ -28,9 +27,21 @@ SamplerState basicSampler	: register(s0);
 // --------------------------------------------------------
 float4 main(VertexToPixelWithTangent input) : SV_TARGET
 {
+	/*
+	float4 position	: SV_POSITION;		// Position of pixel
+	float4 color	: COLOR;			// Base color of pixel
+	float2 uv		: TEXCOORD;			// UV coord of the pixel
+	float3 normal	: NORMAL;			// Normal at the pixel's position
+	float3 worldPos	: POSITION;			// Position of the pixel in world space
+	float3 tangent	: TANGENT;
+	*/
+
+	//return float4(input. tangent, 0);
+
+
 	input.normal = normalize(input.normal);
 	float3 unpackedNormal = normalTexture.Sample(basicSampler, input.uv).rgb * 2 - 1;
-	input.normal = mul(unpackedNormal, createTBNMatrix(input.normal, input.tangent));
+	input.normal = normalize(mul(unpackedNormal, createTBNMatrix(input.normal, input.tangent)));
 
 	float3 toCamera = normalize(cameraPos - input.worldPos);
 	float3 normalizedLightDir = normalize(lightDir);
@@ -38,20 +49,19 @@ float4 main(VertexToPixelWithTangent input) : SV_TARGET
 	// Directional light
 	float directionalDiffuse = Diffuse(input.normal, normalizedLightDir);
 	float directionalSpecular = Specular(input.normal, normalizedLightDir, toCamera, 64.0f);
+	directionalSpecular *= any(directionalDiffuse);
 	float3 directionalLightCombined = (directionalDiffuse + directionalSpecular) * lightDir * lightColor;
 
 	// Point light
 	float3 pointLightDir = normalize(input.worldPos - pointLightPos);
 	float pointLightDiffuse = Diffuse(input.normal, pointLightPos);
 	float pointLightSpecular = Specular(input.normal, pointLightPos, toCamera, 64.0f);
+	pointLightSpecular *= any(pointLightDiffuse);
 	float3 pointLightCombined = (pointLightDiffuse + pointLightSpecular) * pointLightIntensity * pointLightColor;
 
 	// Combining point and directional lights
 	float3 totalLight = environmentAmbient + pointLightCombined + directionalLightCombined;
 	float4 appliedTexture = diffuseTexture.Sample(basicSampler, input.uv);
-
-
-	return appliedTexture;
 
 	return float4(totalLight * input.color.rgb * appliedTexture.rgb, 1);
 }

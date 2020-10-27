@@ -48,8 +48,16 @@ Game::~Game()
 	// Clean up all of our normal pointers to items on the heap
 	delete renderer;
 	delete camera;
+
+	// Yeet all those shaders
 	delete pixelShader;
 	delete vertexShader;
+	delete pixelShaderWithNormals;
+	delete vertexShaderWithNormals;
+	delete pixelShaderSkybox;
+	delete vertexShaderSkybox;
+	delete skybox;
+
 
 	for (int i = 0; i < meshes.size(); i++) {
 		delete meshes[i];
@@ -66,10 +74,8 @@ Game::~Game()
 // --------------------------------------------------------
 void Game::Init()
 {
-	// Helper methods for loading shaders, creating some basic
-	// geometry to draw and some simple camera matrices.
+	// Load the actual shaders
 	LoadShaders();
-	CreateBasicGeometry();
 	
 	// Tell the input assembler stage of the pipeline what kind of
 	// geometric primitives (points, lines or triangles) we want to draw.  
@@ -79,17 +85,30 @@ void Game::Init()
 	CreateWICTextureFromFile(
 		device.Get(),
 		context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/image_1.jpg").c_str(),
+		GetFullPathTo_Wide(L"../../Assets/cushion.png").c_str(),
 		nullptr,
-		textureSRV1.GetAddressOf()
+		cushionDiffuseMap.GetAddressOf()
 	);
-
 	CreateWICTextureFromFile(
 		device.Get(),
 		context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/image_2.png").c_str(),
+		GetFullPathTo_Wide(L"../../Assets/cushion_normals.png").c_str(),
 		nullptr,
-		textureSRV2.GetAddressOf()
+		cushionNormalMap.GetAddressOf()
+	);
+	CreateWICTextureFromFile(
+		device.Get(),
+		context.Get(),
+		GetFullPathTo_Wide(L"../../Assets/rock.png").c_str(),
+		nullptr,
+		rockDiffuseMap.GetAddressOf()
+	);
+	CreateWICTextureFromFile(
+		device.Get(),
+		context.Get(),
+		GetFullPathTo_Wide(L"../../Assets/rock_normals.png").c_str(),
+		nullptr,
+		rockNormalMap.GetAddressOf()
 	);
 
 	// Set up our sampler description
@@ -103,6 +122,18 @@ void Game::Init()
 	
 	// Create the sampler
 	device->CreateSamplerState(&sampDesc, samplerState.GetAddressOf());
+	CreateBasicGeometry();
+
+	// Load the cubemap then create our skybox with it
+	cubeMap = CreateCubemap(
+		GetFullPathTo_Wide(L"../../Assets/Skybox/posx.jpg").c_str(),
+		GetFullPathTo_Wide(L"../../Assets/Skybox/negx.jpg").c_str(),
+		GetFullPathTo_Wide(L"../../Assets/Skybox/posy.jpg").c_str(),
+		GetFullPathTo_Wide(L"../../Assets/Skybox/negy.jpg").c_str(),
+		GetFullPathTo_Wide(L"../../Assets/Skybox/posz.jpg").c_str(),
+		GetFullPathTo_Wide(L"../../Assets/Skybox/negz.jpg").c_str()
+	);
+	skybox = new Skybox(meshes[1], pixelShaderSkybox, vertexShaderSkybox, samplerState, device, cubeMap);
 }
 
 // --------------------------------------------------------
@@ -113,7 +144,11 @@ void Game::Init()
 void Game::LoadShaders()
 {
 	pixelShader = new SimplePixelShader(device.Get(), context.Get(), GetFullPathTo_Wide(L"PixelShader.cso").c_str());
+	pixelShaderWithNormals = new SimplePixelShader(device.Get(), context.Get(), GetFullPathTo_Wide(L"PixelShaderNormal.cso").c_str());
+	pixelShaderSkybox = new SimplePixelShader(device.Get(), context.Get(), GetFullPathTo_Wide(L"PixelShaderSkybox.cso").c_str());
 	vertexShader = new SimpleVertexShader(device.Get(), context.Get(), GetFullPathTo_Wide(L"VertexShader.cso").c_str());
+	vertexShaderSkybox = new SimpleVertexShader(device.Get(), context.Get(), GetFullPathTo_Wide(L"VertexShaderSkybox.cso").c_str());
+	vertexShaderWithNormals = new SimpleVertexShader(device.Get(), context.Get(), GetFullPathTo_Wide(L"VertexShaderNormal.cso").c_str());
 }
 
 // --------------------------------------------------------
@@ -128,22 +163,22 @@ void Game::CreateBasicGeometry()
 	XMFLOAT4 white = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// Generating materials to be used by different meshes
-	Material* redMat = new Material(red, pixelShader, vertexShader, textureSRV1);
-	Material* greenMat = new Material(green, pixelShader, vertexShader, textureSRV1);
-	Material* blueMat = new Material(blue, pixelShader, vertexShader, textureSRV1);
-	Material* whiteMat = new Material(white, pixelShader, vertexShader, textureSRV1);
+	Material* cushionNoNormal = new Material(white, pixelShader, vertexShader, cushionDiffuseMap);
+	Material* cushionNormal = new Material(white, pixelShaderWithNormals, vertexShaderWithNormals, cushionDiffuseMap, cushionNormalMap);
+	Material* rocksNoNormal = new Material(white, pixelShader, vertexShader, rockDiffuseMap);
+	Material* rocksNormal = new Material(white, pixelShaderWithNormals, vertexShaderWithNormals, rockDiffuseMap, rockNormalMap);
 
 	// Store the materials and meshes
-	materials.push_back(redMat);
-	materials.push_back(greenMat);
-	materials.push_back(blueMat);
-	materials.push_back(whiteMat);
-	meshes.push_back(new Mesh(GetFullPathTo("/Assets/sphere.obj").c_str(), device));
-	meshes.push_back(new Mesh(GetFullPathTo("/Assets/cube.obj").c_str(), device));
-	meshes.push_back(new Mesh(GetFullPathTo("/Assets/helix.obj").c_str(), device));
-	meshes.push_back(new Mesh(GetFullPathTo("/Assets/cylinder.obj").c_str(), device));
-	meshes.push_back(new Mesh(GetFullPathTo("/Assets/cone.obj").c_str(), device));
-	meshes.push_back(new Mesh(GetFullPathTo("/Assets/torus.obj").c_str(), device));
+	materials.push_back(cushionNoNormal);
+	materials.push_back(cushionNormal);
+	materials.push_back(rocksNoNormal);
+	materials.push_back(rocksNormal);
+	meshes.push_back(new Mesh(GetFullPathTo("../../Assets/sphere.obj").c_str(), device));
+	meshes.push_back(new Mesh(GetFullPathTo("../../Assets/cube.obj").c_str(), device));
+	meshes.push_back(new Mesh(GetFullPathTo("../../Assets/helix.obj").c_str(), device));
+	meshes.push_back(new Mesh(GetFullPathTo("../../Assets/cylinder.obj").c_str(), device));
+	meshes.push_back(new Mesh(GetFullPathTo("../../Assets/cone.obj").c_str(), device));
+	meshes.push_back(new Mesh(GetFullPathTo("../../Assets/torus.obj").c_str(), device));
 
 	// Setting up meshes and materials in entities then spreading 'em out
 	Entity ent1 = Entity(meshes[0], materials[0]);
@@ -172,7 +207,6 @@ void Game::CreateBasicGeometry()
 	entities.push_back(ent4);
 	entities.push_back(ent5);
 	entities.push_back(ent6);
-
 }
 
 // --------------------------------------------------------
@@ -209,30 +243,35 @@ void Game::Draw(float deltaTime, float totalTime)
 	// Clear the background then draw the meshes
 	renderer->ClearBackground(context, backBufferRTV, depthStencilView);
 
-	// Set my shaders
-	pixelShader->SetShader();
-	vertexShader->SetShader();
-	pixelShader->SetSamplerState("basicSampler", samplerState.Get());
+	// Draw the skybox
+	skybox->Draw(context, camera);
 
 	// Push in pixel shader information
-	pixelShader->SetFloat3("lightColor", DirectX::XMFLOAT3(1.0f, 0.3f, 0.3f));
-	pixelShader->SetFloat3("lightDir", DirectX::XMFLOAT3(1.0f, -2.0f, 0.0f));
-	pixelShader->SetFloat("lightIntensity", 2.0f);
+	pixelShader->SetFloat3("lightColor", DirectX::XMFLOAT3(2.0f, 0.0f, 0.0f));
+	pixelShader->SetFloat3("lightDir", DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f));
+	pixelShader->SetFloat("lightIntensity", 4.0f);
 
-	pixelShader->SetFloat3("pointLightPos", DirectX::XMFLOAT3(0.0f, 3.0f, 1.0f));
-	pixelShader->SetFloat3("pointLightColor", DirectX::XMFLOAT3(0, 0.5f, 0));
-	pixelShader->SetFloat("pointLightIntensity", 2.0f);
+	pixelShader->SetFloat3("pointLightColor", DirectX::XMFLOAT3(0, 0, 2.0f));
+	pixelShader->SetFloat3("pointLightPos", DirectX::XMFLOAT3(-10.0f, -10.0f, -10.0f));
+	pixelShader->SetFloat("pointLightIntensity", 4.0f);
 
 	pixelShader->SetFloat3("environmentAmbient", DirectX::XMFLOAT3(0.1f, 0.1f, 0.1f));
 	pixelShader->SetFloat("specularIntensity", 2.0f);
 
-	// Bind textures and sampler state
-	pixelShader->SetShaderResourceView("diffuseTexture", textureSRV1.Get());
+	// Push in lighting information for pixel shader with normal maps
+	pixelShaderWithNormals->SetFloat3("lightColor", DirectX::XMFLOAT3(2.0f, 0.0f, 0.0f));
+	pixelShaderWithNormals->SetFloat3("lightDir", DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f));
+	pixelShaderWithNormals->SetFloat("lightIntensity", 4.0f);
 
-	pixelShader->CopyAllBufferData();
+	pixelShaderWithNormals->SetFloat3("pointLightColor", DirectX::XMFLOAT3(0, 0, 2.0f));
+	pixelShaderWithNormals->SetFloat3("pointLightPos", DirectX::XMFLOAT3(-10.0f, -10.0f, -10.0f));
+	pixelShaderWithNormals->SetFloat("pointLightIntensity", 4.0f);
+
+	pixelShaderWithNormals->SetFloat3("environmentAmbient", DirectX::XMFLOAT3(0.2f, 0.2f, 0.2f));
+	pixelShaderWithNormals->SetFloat("specularIntensity", 2.0f);
 
 	// Actually draw the meshes
-	renderer->DrawMeshes(context, entities, camera);
+	renderer->DrawMeshes(context, samplerState, entities, camera);
 
 	// Present the back buffer to the user
 	swapChain->Present(0, 0);
@@ -241,3 +280,87 @@ void Game::Draw(float deltaTime, float totalTime)
 	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
 }
 
+// --------------------------------------------------------
+// Loads six individual textures (the six facesof a cube map), then
+// creates a blank cube map and copies each of the six textures to
+// another face.  Afterwards, creates a shader resource view for
+// the cube map and cleans up all of the temporary resources.
+// --------------------------------------------------------
+Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> Game::CreateCubemap(
+	const wchar_t* right,
+	const wchar_t* left,
+	const wchar_t* up,
+	const wchar_t* down,
+	const wchar_t* front,
+	const wchar_t* back
+)
+{
+	// Load the textures in an array
+	ID3D11Texture2D* textures[6] = {};
+	CreateWICTextureFromFile(device.Get(), right, (ID3D11Resource**)&textures[0], 0);
+	CreateWICTextureFromFile(device.Get(), left, (ID3D11Resource**)&textures[1], 0);
+	CreateWICTextureFromFile(device.Get(), up, (ID3D11Resource**)&textures[2], 0);
+	CreateWICTextureFromFile(device.Get(), down, (ID3D11Resource**)&textures[3], 0);
+	CreateWICTextureFromFile(device.Get(), front, (ID3D11Resource**)&textures[4], 0);
+	CreateWICTextureFromFile(device.Get(), back, (ID3D11Resource**)&textures[5], 0);
+
+	// We'll assume all of the textures are the same color format and resolution,
+	// so get the description of the first shader resource view
+	D3D11_TEXTURE2D_DESC faceDesc = {};
+	textures[0]->GetDesc(&faceDesc);
+	
+	// Describe the resource for the cube map, which is simply
+	// a "texture 2d array". This is a special GPU resource format,
+	// NOT just a C++ array of textures!!!
+	D3D11_TEXTURE2D_DESC cubeDesc = {};
+	cubeDesc.ArraySize = 6; // Cube map!
+	cubeDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE; // We'll be using as a texture in a shader
+	cubeDesc.CPUAccessFlags = 0; // No read back
+	cubeDesc.Format = faceDesc.Format; // Match the loaded texture's color format
+	cubeDesc.Width = faceDesc.Width; // Match the size
+	cubeDesc.Height = faceDesc.Height; // Match the size
+	cubeDesc.MipLevels = 1; // Only need 1
+	cubeDesc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE; // A CUBE MAP, not 6 separate textures
+	cubeDesc.Usage = D3D11_USAGE_DEFAULT; // Standard usage
+	cubeDesc.SampleDesc.Count = 1;
+	cubeDesc.SampleDesc.Quality = 0;
+	
+	// Create the actual texture resource
+	ID3D11Texture2D* cubeMapTexture = 0;
+	device->CreateTexture2D(&cubeDesc, 0, &cubeMapTexture);
+	
+	// Loop through the individual face textures and copy them,
+	// one at a time, to the cube map texure
+	for (int i = 0; i < 6; i++)
+	{
+		// Calculate the subresource position to copy into
+		unsigned int subresource = D3D11CalcSubresource(
+			0, // Which mip (zero, since there's only one)
+			i, // Which array element?
+			1); // How many mip levels are in the texture?
+			// Copy from one resource (texture) to another
+		context->CopySubresourceRegion(
+			cubeMapTexture, // Destination resource
+			subresource, // Dest subresource index (one of the array elements)
+			0, 0, 0, // XYZ location of copy
+			textures[i], // Source resource
+			0, // Source subresource index (we're assuming there's only one)
+			0); // Source subresource "box" of data to copy (zero means the whole thing)
+	}
+	// At this point, all of the faces have been copied into the
+	// cube map texture, so we can describe a shader resource view for it
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = cubeDesc.Format; // Same format as texture
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE; // Treat this as a cube!
+	srvDesc.TextureCube.MipLevels = 1; // Only need access to 1 mip
+	srvDesc.TextureCube.MostDetailedMip = 0; // Index of the first mip we want to see
+	// Make the SRV
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> cubeSRV;
+	device->CreateShaderResourceView(cubeMapTexture, &srvDesc, cubeSRV.GetAddressOf());
+	// Now that we're done, clean up the stuff we don't need anymore
+	cubeMapTexture->Release(); // Done with this particular reference (the SRV has another)
+	for (int i = 0; i < 6; i++)
+		textures[i]->Release();
+	// Send back the SRV, which is what we need for our shaders
+	return cubeSRV;
+};

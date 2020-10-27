@@ -293,7 +293,7 @@ void Mesh::CalculateTangents(Vertex* verts, int numVerts, unsigned int* indices,
 		DirectX::XMVECTOR tangent = DirectX::XMLoadFloat3(&verts[i].tangent);
 
 		// Use Gram-Schmidt orthogonalize
-		tangent = DirectX::XMVector3Normalize(DirectX::XMVectorMultiply(DirectX::XMVectorSubtract(tangent, normal), DirectX::XMVector3Dot(normal, tangent)));
+		tangent = DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(tangent, DirectX::XMVectorMultiply( normal, DirectX::XMVector3Dot(normal, tangent))));
 
 		// Store the tangent
 		XMStoreFloat3(&verts[i].tangent, tangent);
@@ -316,4 +316,16 @@ Microsoft::WRL::ComPtr<ID3D11Buffer> Mesh::GetIndexBuffer()
 int Mesh::GetIndexCount() 
 {
 	return indexCount;
+}
+
+void Mesh::SetBuffersAndDraw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context)
+{
+	// Set buffers in the input assembler
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+	context->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &offset);
+	context->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+
+	// Draw this mesh
+	context->DrawIndexed(indexCount, 0, 0);
 }

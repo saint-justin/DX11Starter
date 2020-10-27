@@ -33,6 +33,13 @@ struct VertexToPixelWithTangent
 	float3 tangent	: TANGENT;
 };
 
+// Struct to pass information from the vertex shader to the pixel shader for the skybox
+struct VertexToPixelSkybox
+{
+	float4 position  : SV_POSITION;
+	float3 sampleDir : DIRECTION;
+};
+
 // ---------------------- HELPER FUNCTIONS ----------------------
 
 // Calculates the diffuse amount given the surface and direction from light
