@@ -50,7 +50,7 @@ float4 main(VertexToPixelWithTangent input) : SV_TARGET
 	float directionalDiffuse = Diffuse(input.normal, normalizedLightDir);
 	float directionalSpecular = Specular(input.normal, normalizedLightDir, toCamera, 64.0f);
 	directionalSpecular *= any(directionalDiffuse);
-	float3 directionalLightCombined = (directionalDiffuse + directionalSpecular) * lightDir * lightColor;
+	float3 directionalLightCombined = (directionalDiffuse + directionalSpecular) * lightColor;
 
 	// Point light
 	float3 pointLightDir = normalize(input.worldPos - pointLightPos);
