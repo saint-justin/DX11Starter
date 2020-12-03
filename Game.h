@@ -87,5 +87,6 @@ private:
 
 	// GUI Info
 	bool showGui;
+	bool drawWithRenderQueue;
 };
 

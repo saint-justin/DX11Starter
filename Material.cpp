@@ -3,7 +3,8 @@
 Material::Material(DirectX::XMFLOAT4 _colorTint, 
 	SimplePixelShader* _pixelShader, 
 	SimpleVertexShader* _vertexShader, 
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> _textureSRV)
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> _textureSRV,
+	int _renderPriority)
 {
 	colorTint = _colorTint;
 	pixelShader = _pixelShader;
@@ -11,13 +12,15 @@ Material::Material(DirectX::XMFLOAT4 _colorTint,
 	albedoMapSRV = _textureSRV;
 	normalMapSRV = nullptr;
 	hasNormalMap = false;
+	renderPriority = _renderPriority;
 }
 
 Material::Material(DirectX::XMFLOAT4 _colorTint,
 	SimplePixelShader* _pixelShader,
 	SimpleVertexShader* _vertexShader,
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> _textureSRV,
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> _normalMap)
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> _normalMap,
+	int _renderPriority)
 {
 	colorTint = _colorTint;
 	pixelShader = _pixelShader;
@@ -25,6 +28,7 @@ Material::Material(DirectX::XMFLOAT4 _colorTint,
 	albedoMapSRV = _textureSRV;
 	normalMapSRV = _normalMap;
 	hasNormalMap = true;
+	renderPriority = _renderPriority;
 }
 
 DirectX::XMFLOAT4 Material::GetColorTint() { return colorTint; }

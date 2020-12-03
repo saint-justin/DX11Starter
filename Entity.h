@@ -13,6 +13,10 @@ public:
 	Mesh* GetMesh();
 	Transform* GetTransform();
 	Material* GetMaterial();
+	int renderPriority;
+	bool operator< (const Entity& other) const {
+		return renderPriority < other.renderPriority;
+	}
 
 private:
 	Mesh* mesh;

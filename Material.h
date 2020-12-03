@@ -13,14 +13,16 @@ public:
 		DirectX::XMFLOAT4 _colorTint, 
 		SimplePixelShader* _pixelShader, 
 		SimpleVertexShader* vertexShader,
-		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> _textureSRV
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> _textureSRV,
+		int _renderPriority
 	);
 	Material(
 		DirectX::XMFLOAT4 _colorTint,
 		SimplePixelShader* _pixelShader,
 		SimpleVertexShader* vertexShader,
 		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> _textureSRV,
-		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> _normalMap
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> _normalMap,
+		int _renderPriority
 	);
 
 	DirectX::XMFLOAT4 GetColorTint();
@@ -30,6 +32,7 @@ public:
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetTextureSRV();
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetNormalMap();
 	bool hasNormalMap;
+	int renderPriority;
 
 private:
 	DirectX::XMFLOAT4 colorTint;

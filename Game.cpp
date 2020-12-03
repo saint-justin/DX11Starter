@@ -179,10 +179,10 @@ void Game::CreateBasicGeometry()
 	XMFLOAT4 white = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// Generating materials to be used by different meshes
-	Material* cushionNoNormal = new Material(white, pixelShader, vertexShader, cushionDiffuseMap);
-	Material* cushionNormal = new Material(white, pixelShaderWithNormals, vertexShaderWithNormals, cushionDiffuseMap, cushionNormalMap);
-	Material* rocksNoNormal = new Material(white, pixelShader, vertexShader, rockDiffuseMap);
-	Material* rocksNormal = new Material(white, pixelShaderWithNormals, vertexShaderWithNormals, rockDiffuseMap, rockNormalMap);
+	Material* cushionNoNormal = new Material(white, pixelShader, vertexShader, cushionDiffuseMap, 1);
+	Material* cushionNormal = new Material(white, pixelShaderWithNormals, vertexShaderWithNormals, cushionDiffuseMap, cushionNormalMap, 2);
+	Material* rocksNoNormal = new Material(white, pixelShader, vertexShader, rockDiffuseMap, 3);
+	Material* rocksNormal = new Material(white, pixelShaderWithNormals, vertexShaderWithNormals, rockDiffuseMap, rockNormalMap, 4);
 
 	// Store the materials and meshes
 	materials.push_back(cushionNoNormal);
@@ -197,9 +197,7 @@ void Game::CreateBasicGeometry()
 	meshes.push_back(new Mesh(GetFullPathTo("../../Assets/torus.obj").c_str(), device));
 
 	// Spawn in entities with random meshes, materials, and locations
-	for (int i = 0; i < 50; i++) {
-		AddSingleGeo();
-	}
+	AddGeo(50);
 }
 
 // Adds 10 more geometry items to the scene
@@ -210,7 +208,7 @@ void Game::AddGeo(int n)
 		AddSingleGeo();
 	}
 
-	printf("\nAdding more geometry to the scene. Current count is %i", entities.size());
+	renderer->SetDirty();
 }
 
 // Adds a single random piece of geometry to the scene
@@ -238,7 +236,7 @@ void Game::RemoveGeo(int n)
 		entities.pop_back();
 	}
 
-	printf("\nAdding more geometry to the scene. Current count is %i", entities.size());
+	renderer->SetDirty();
 }
 
 // --------------------------------------------------------
@@ -278,6 +276,10 @@ void Game::Draw(float deltaTime, float totalTime)
 	// Clear the background then draw the meshes
 	renderer->ClearBackground(context, backBufferRTV, depthStencilView);
 
+	// Check if the render queue needs to be cleaned
+	if (renderer->GetDirty())
+		renderer->GenerateRenderQueue(entities);
+
 	// Draw the skybox
 	skybox->Draw(context, camera);
 
@@ -306,7 +308,11 @@ void Game::Draw(float deltaTime, float totalTime)
 	pixelShaderWithNormals->SetFloat("specularIntensity", 2.0f);
 
 	// Actually draw the meshes
-	renderer->DrawMeshes(context, samplerState, entities, camera);
+	if (drawWithRenderQueue)
+		renderer->DrawMeshesQueued(context, samplerState, camera);
+	else
+		renderer->DrawMeshes(context, samplerState, entities, camera);
+
 
 	// Draw the GUI to the screen
 	DrawGui();
@@ -404,10 +410,12 @@ Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> Game::CreateCubemap(
 };
 
 void Game::DrawGui() {
+	// Setup
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
+	// Adding/Removing objects
 	ImGui::Begin("Helpful Stats");
 	if (ImGui::Button("-100 objects"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
 		RemoveGeo(100);
@@ -416,7 +424,14 @@ void Game::DrawGui() {
 		AddGeo(100);
 	ImGui::Text("You can also add or remove 10 shapes at a \ntime via the Q and E keys respectively.");
 
+	// Toggle for the render queue
+	ImGui::Checkbox("Use Render Queue?", &drawWithRenderQueue);
+
+	// Showing FPS
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+	ImGui::Text("Total objects being rendered: %i", entities.size());
+
+	// Actually displaying
 	ImGui::End();
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
