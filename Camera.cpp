@@ -61,8 +61,8 @@ void Camera::Update(float deltaTime, HWND windowHandle)
 
 	// Check if the player's traing to actually move the camera
 	if (GetAsyncKeyState(VK_LBUTTON) & 0x8000) {
-		float mouseDiffX = -(mousePos.x - newMousePos.x) * mouseLookSpeed * deltaTime;
-		float mouseDiffY = -(mousePos.y - newMousePos.y) * mouseLookSpeed * deltaTime;
+		float mouseDiffX = -(mousePos.x - newMousePos.x) * mouseLookSpeed * 0.01f;
+		float mouseDiffY = -(mousePos.y - newMousePos.y) * mouseLookSpeed * 0.01f;
 
 		// Adjust the camera based on mouse movement
 		DirectX::XMFLOAT3 oldRot = transform.GetPitchYawRoll();

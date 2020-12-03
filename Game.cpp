@@ -35,7 +35,7 @@ Game::Game(HINSTANCE hInstance)
 
 	// Setting up renderer and camera
 	renderer = new Renderer();
-	camera = new Camera(0, 0, -5, (float)this->width / this->height);
+	camera = new Camera(0, 0, -40, (float)this->width / this->height);
 }
 
 // --------------------------------------------------------
@@ -72,7 +72,7 @@ Game::~Game()
 // Called once per program, after DirectX and the window
 // are initialized but before the game loop.
 // --------------------------------------------------------
-void Game::Init()
+void Game::Init(HWND hWnd)
 {
 	// Load the actual shaders
 	LoadShaders();
@@ -134,6 +134,16 @@ void Game::Init()
 		GetFullPathTo_Wide(L"../../Assets/Skybox/negz.jpg").c_str()
 	);
 	skybox = new Skybox(meshes[1], pixelShaderSkybox, vertexShaderSkybox, samplerState, device, cubeMap);
+
+	// Setting up IMGUI
+	// Setup Dear ImGui context
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGui::StyleColorsDark();
+	showGui = true;
+	ImGui_ImplWin32_Init(hWnd); // Unclear on if I need this?
+	ImGui_ImplDX11_Init(device.Get(), context.Get());
 }
 
 // --------------------------------------------------------
@@ -180,33 +190,49 @@ void Game::CreateBasicGeometry()
 	meshes.push_back(new Mesh(GetFullPathTo("../../Assets/cone.obj").c_str(), device));
 	meshes.push_back(new Mesh(GetFullPathTo("../../Assets/torus.obj").c_str(), device));
 
-	// Setting up meshes and materials in entities then spreading 'em out
-	Entity ent1 = Entity(meshes[0], materials[0]);
-	ent1.GetTransform()->SetPosition(-3.0f, 0.0f, 0.0f);
+	// Spawn in entities with random meshes, materials, and locations
+	for (int i = 0; i < 50; i++) {
+		AddSingleGeo();
+	}
+}
 
-	Entity ent2 = Entity(meshes[1], materials[1]);
-	ent2.GetTransform()->SetPosition(-1.5f, 0.0f, 0.0f);
-	
-	Entity ent3 = Entity(meshes[2], materials[2]);
-	ent3.GetTransform()->SetPosition(0.0f, 0.0f, 0.0f);
-	ent3.GetTransform()->SetScale(0.75f, 0.75f, 0.75f);
-	
-	Entity ent4 = Entity(meshes[3], materials[3]);
-	ent4.GetTransform()->SetPosition(1.5f, 0.0f, 0.0f);
-	
-	Entity ent5 = Entity(meshes[4], materials[1]);
-	ent5.GetTransform()->SetPosition(3.0f, 0.0f, 0.0f);
-	
-	Entity ent6 = Entity(meshes[5], materials[1]);
-	ent6.GetTransform()->SetPosition(4.5f, 0.0f, 0.0f);
+// Adds 10 more geometry items to the scene
+void Game::AddGeo(int n)
+{
+	// Spawn in entities with random meshes, materials, and locations
+	for (int i = 0; i < n; i++) {
+		AddSingleGeo();
+	}
 
-	// Setting the entities into the entity array
-	entities.push_back(ent1);
-	entities.push_back(ent2);
-	entities.push_back(ent3);
-	entities.push_back(ent4);
-	entities.push_back(ent5);
-	entities.push_back(ent6);
+	printf("\nAdding more geometry to the scene. Current count is %i", entities.size());
+}
+
+// Adds a single random piece of geometry to the scene
+void Game::AddSingleGeo() {
+	Entity e = Entity(meshes[rand() % meshes.size()], materials[rand() % materials.size()]);
+
+	float xPos = (rand() % 30) - 15.0f;
+	float yPos = (rand() % 30) - 15.0f;
+	float zPos = (rand() % 30) - 15.0f;
+	e.GetTransform()->SetPosition(xPos, yPos, zPos);
+
+	float xRot = rand() % 360;
+	float yRot = rand() % 360;
+	float zRot = rand() % 360;
+	e.GetTransform()->SetRotation(xRot, yRot, zRot);
+
+	entities.push_back(e);
+}
+
+// Removes 10 pieces of geometry from the scene
+void Game::RemoveGeo(int n)
+{
+	for (int i = 0; i < n; i++) {
+		if (entities.size() == 0) return;
+		entities.pop_back();
+	}
+
+	printf("\nAdding more geometry to the scene. Current count is %i", entities.size());
 }
 
 // --------------------------------------------------------
@@ -230,6 +256,9 @@ void Game::Update(float deltaTime, float totalTime)
 	// Quit if the escape key is pressed
 	if (GetAsyncKeyState(VK_ESCAPE))
 		Quit();
+
+	if (GetAsyncKeyState('Q')) RemoveGeo(10);
+	else if (GetAsyncKeyState('E')) AddGeo(10);
 
 	// Update the camera
 	camera->Update(deltaTime, this->hWnd);
@@ -272,6 +301,9 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	// Actually draw the meshes
 	renderer->DrawMeshes(context, samplerState, entities, camera);
+
+	// Draw the GUI to the screen
+	DrawGui();
 
 	// Present the back buffer to the user
 	swapChain->Present(0, 0);
@@ -364,3 +396,22 @@ Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> Game::CreateCubemap(
 	// Send back the SRV, which is what we need for our shaders
 	return cubeSRV;
 };
+
+void Game::DrawGui() {
+	ImGui_ImplDX11_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+
+	ImGui::Begin("Helpful Stats");
+	if (ImGui::Button("-100 objects"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+		RemoveGeo(100);
+	ImGui::SameLine();
+	if (ImGui::Button("+100 objects"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+		AddGeo(100);
+	ImGui::Text("You can also add or remove 10 shapes at a \ntime via the Q and E keys respectively.");
+
+	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+	ImGui::End();
+	ImGui::Render();
+	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+}

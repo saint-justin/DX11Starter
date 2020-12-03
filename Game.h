@@ -8,6 +8,10 @@
 #include "Lights.h"
 #include "Skybox.h"
 
+#include "ImGui\\imgui.h"
+#include "ImGui\\imgui_impl_win32.h"
+#include "ImGui\\imgui_impl_dx11.h"
+
 #include <DirectXMath.h>
 #include <wrl/client.h> // Used for ComPtr - a smart pointer for COM objects
 #include <vector>
@@ -33,7 +37,7 @@ public:
 
 	// Overridden setup and game loop methods, which
 	// will be called automatically
-	void Init();
+	void Init(HWND hWnd);
 	void OnResize();
 	void Update(float deltaTime, float totalTime);
 	void Draw(float deltaTime, float totalTime);
@@ -43,6 +47,10 @@ private:
 	// Initialization helper methods - feel free to customize, combine, etc.
 	void LoadShaders(); 
 	void CreateBasicGeometry();
+	void AddGeo(int n);
+	void RemoveGeo(int n);
+	void AddSingleGeo();
+	void DrawGui();
 
 	// Shaders and shader-related constructs
 	SimplePixelShader* pixelShader;
@@ -76,5 +84,8 @@ private:
 	SimpleVertexShader* vertexShaderSkybox;
 	SimplePixelShader* pixelShaderSkybox;
 	Skybox* skybox;
+
+	// GUI Info
+	bool showGui;
 };
 

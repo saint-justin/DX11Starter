@@ -375,7 +375,7 @@ HRESULT DXCore::Run()
 	previousTime = now;
 
 	// Give subclass a chance to initialize
-	Init();
+	Init(hWnd);
 
 	// Our overall game and message loop
 	MSG msg = {};
@@ -612,10 +612,8 @@ std::wstring DXCore::GetFullPathTo_Wide(std::wstring relativeFilePath)
 	return GetExePath_Wide() + L"\\" + relativeFilePath;
 }
 
-
-
-
-
+// External ImGui declaration
+extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 // --------------------------------------------------------
 // Handles messages that are sent to our window by the
 // operating system.  Ignoring these messages would cause
@@ -624,6 +622,9 @@ std::wstring DXCore::GetFullPathTo_Wide(std::wstring relativeFilePath)
 // --------------------------------------------------------
 LRESULT DXCore::ProcessMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	if (ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam))
+		return true;
+
 	// Check the incoming message and handle any we care about
 	switch (uMsg)
 	{

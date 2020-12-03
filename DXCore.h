@@ -40,7 +40,7 @@ public:
 	virtual void OnResize();
 
 	// Pure virtual methods for setup and game functionality
-	virtual void Init() = 0;
+	virtual void Init(HWND hWnd) = 0;
 	virtual void Update(float deltaTime, float totalTime) = 0;
 	virtual void Draw(float deltaTime, float totalTime) = 0;
 
@@ -93,5 +93,6 @@ private:
 
 	void UpdateTimer();			// Updates the timer for this frame
 	void UpdateTitleBarStats();	// Puts debug info in the title bar
+	/*extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);*/
 };
 
