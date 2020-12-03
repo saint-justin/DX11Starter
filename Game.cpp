@@ -58,14 +58,20 @@ Game::~Game()
 	delete vertexShaderSkybox;
 	delete skybox;
 
-
+	// Delete al the meshes
 	for (int i = 0; i < meshes.size(); i++) {
 		delete meshes[i];
 	}
 
+	// Delete all the materials
 	for (int i = 0; i < materials.size(); i++) {
 		delete materials[i];
 	}
+
+	// Clean up ImGui's memory
+	ImGui_ImplDX11_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
 }
 
 // --------------------------------------------------------
